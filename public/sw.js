@@ -13,7 +13,13 @@ self.addEventListener('install', (event) => {
     new URL('./icon-512.png', scope).toString(),
     new URL('./favicon.png', scope).toString(),
   ]
-  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(shell)))
+  event.waitUntil(caches.open(STATIC_CACHE).then(async (cache) => {
+    await cache.addAll(shell)
+    // An installed PWA may stay open for days. Activate the fresh worker as soon
+    // as its app shell is ready instead of leaving it waiting for every client
+    // window to close.
+    await self.skipWaiting()
+  }))
 })
 
 self.addEventListener('activate', (event) => {

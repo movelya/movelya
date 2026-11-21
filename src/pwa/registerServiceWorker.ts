@@ -5,14 +5,20 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
 }
 
 async function register() {
-  const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
+  const registration = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { updateViaCache: 'none' })
   notifyUpdate(registration)
   registration.addEventListener('updatefound', () => {
     const worker = registration.installing
     if (!worker) return
     worker.addEventListener('statechange', () => notifyUpdate(registration))
   })
-  window.setInterval(() => { void registration.update() }, 60 * 60 * 1000)
+  const checkForUpdate = () => { void registration.update() }
+  // Check whenever the installed app returns to the foreground, not only once
+  // per hour. updateViaCache above ensures this request bypasses HTTP caches.
+  window.addEventListener('focus', checkForUpdate)
+  window.addEventListener('online', checkForUpdate)
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate() })
+  window.setInterval(checkForUpdate, 15 * 60 * 1000)
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (window.__movelyaRefreshing) return
     window.__movelyaRefreshing = true

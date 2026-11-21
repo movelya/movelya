@@ -23,4 +23,12 @@ test('PWA fetches current application code before cached code', () => {
   assert.match(worker, /__BUILD_ID__/)
   assert.match(worker, /\['script', 'style'\].*networkFirst/)
   assert.match(worker, /self\.clients\.claim\(\)/)
+  assert.match(worker, /self\.skipWaiting\(\)/)
+})
+
+test('GitHub Pages versions the service worker on every deploy', () => {
+  const script = read('scripts/prepare-github-pages.mjs')
+  assert.match(script, /dist-github/)
+  assert.match(script, /__BUILD_ID__/)
+  assert.match(read('package.json'), /prepare-github-pages\.mjs/)
 })
