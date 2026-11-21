@@ -6,6 +6,7 @@ import { useAuth } from './contexts/AuthContext'
 import { useOnboardingStatus } from './hooks/useOnboardingStatus'
 import { PwaInstallPrompt } from './components/PwaInstallPrompt'
 import { PwaUpdatePrompt } from './components/PwaUpdatePrompt'
+import { NotificationPermissionPrompt } from './components/NotificationPermissionPrompt'
 import { PlanWelcomeModal } from './components/PlanWelcomeModal'
 import { ErrorPage, LoadingScreen, NotFoundPage, RoutePlaceholder } from './pages/SystemPages'
 import { useVitaRoute } from './hooks/useVitaRoute'
@@ -191,7 +192,7 @@ export default function App() {
     return <Suspense fallback={<LoadingScreen />}><OnboardingPage userId="development-preview" initialName="João Silva" onComplete={() => undefined} /></Suspense>
   }
   if ((!user && isPrivateRoute(route) && !(import.meta.env.DEV && (route?.id === 'inicio' || route?.id === 'conquistas' || route?.id === 'comunidade'))) || (recoveryMode && route?.id !== 'redefinir-senha')) return <LoadingScreen />
-  if (route?.public) return <><PwaInstallPrompt /><PwaUpdatePrompt /><Suspense fallback={<LoadingScreen />}><AuthPage routeId={route.id} navigate={navigate} /></Suspense></>
+  if (route?.public) return <><PwaInstallPrompt /><PwaUpdatePrompt /><NotificationPermissionPrompt userId={user?.id} /><Suspense fallback={<LoadingScreen />}><AuthPage routeId={route.id} navigate={navigate} /></Suspense></>
   if (user && route?.id === 'configuracao-inicial') {
     return <Suspense fallback={<LoadingScreen />}><OnboardingPage
       userId={user.id}
@@ -207,6 +208,7 @@ export default function App() {
     <AppErrorBoundary>
       <PwaInstallPrompt />
       <PwaUpdatePrompt />
+      <NotificationPermissionPrompt userId={user?.id} />
       {showPlanWelcome ? <PlanWelcomeModal onChooseFree={closePlanWelcome} onChoosePaid={(planCode) => { closePlanWelcome(); navigate(`/checkout?plan=${planCode}`) }} /> : showQuotaUpgrade && <PlanWelcomeModal mode="quota-warning" onChooseFree={closeQuotaUpgrade} onChoosePaid={(planCode) => { closeQuotaUpgrade(); navigate(`/checkout?plan=${planCode}`) }} />}
       <div className="vita-shell">
         <VitaSidebar

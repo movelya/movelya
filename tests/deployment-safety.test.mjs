@@ -32,3 +32,10 @@ test('GitHub Pages versions the service worker on every deploy', () => {
   assert.match(script, /__BUILD_ID__/)
   assert.match(read('package.json'), /prepare-github-pages\.mjs/)
 })
+
+test('Notification permission prompt is shown once per user and device', () => {
+  const prompt = read('src/components/NotificationPermissionPrompt.tsx')
+  assert.match(prompt, /MOVELYA\.notification-permission-requested\.v1/)
+  assert.match(prompt, /Notification\.permission !== 'default'/)
+  assert.match(prompt, /notificationService\.enablePush/)
+})
