@@ -71,38 +71,44 @@ Deno.serve(async (request) => {
     const conversationId = cleanText(input.conversationId, 80), message = cleanText(input.message, 2000)
     if (!conversationId || !message) return json({ error: 'Escreva uma mensagem para continuar.' }, 422)
 
-    const conversations = await restGet(supabaseUrl, authHeaders, `ai_conversations?id=eq.${encodeURIComponent(conversationId)}&user_id=eq.${encodeURIComponent(user.id)}&select=id,permissions`)
+    // These independent reads used to run one after another before the model was
+    // contacted. Start them together to remove two network round trips.
+    const [conversations, privacyResult, historyResult] = await Promise.all([
+      restGet(supabaseUrl, authHeaders, `ai_conversations?id=eq.${encodeURIComponent(conversationId)}&user_id=eq.${encodeURIComponent(user.id)}&select=id,permissions`),
+      restGet(supabaseUrl, authHeaders, `ai_data_permissions?user_id=eq.${encodeURIComponent(user.id)}&select=profile,nutrition,workouts,weight,measurements,photos,activities`),
+      restGet(supabaseUrl, authHeaders, `ai_messages?conversation_id=eq.${encodeURIComponent(conversationId)}&select=role,content&order=created_at.desc&limit=8`),
+    ])
     if (!conversations.ok || !conversations.data?.[0]) return json({ error: 'Conversa não encontrada.' }, 404)
+    if (!historyResult.ok) return json({ error: 'Não foi possível recuperar esta conversa.' }, 502)
     const conversationPermissions = normalizePermissions(conversations.data[0].permissions)
-    const privacyResult = await restGet(supabaseUrl, authHeaders, `ai_data_permissions?user_id=eq.${encodeURIComponent(user.id)}&select=profile,nutrition,workouts,weight,measurements,photos,activities`)
     const privacyPermissions = privacyResult.data?.[0] ?? {}
     const permissions = applyPrivacyBoundary(conversationPermissions, privacyPermissions)
-    const [historyResult, context] = await Promise.all([
-      restGet(supabaseUrl, authHeaders, `ai_messages?conversation_id=eq.${encodeURIComponent(conversationId)}&select=role,content&order=created_at.desc&limit=16`),
-      gatherContext(supabaseUrl, authHeaders, user.id, permissions),
-    ])
-    if (!historyResult.ok) return json({ error: 'Não foi possível recuperar esta conversa.' }, 502)
+    const context = await gatherContext(supabaseUrl, authHeaders, user.id, permissions)
     const history = (historyResult.data ?? []).reverse().map((item: Record<string, unknown>) => ({ role: item.role, content: String(item.content) }))
 
-    const model = geminiKey ? (Deno.env.get('GEMINI_MODEL') || 'gemini-3.8-flash') : (Deno.env.get('OPENAI_MODEL') || 'gpt-5.6')
+    // Flash-Lite is purposely selected for short, high-volume chat turns. An
+    // explicit secret still overrides this for teams that need another model.
+    const model = geminiKey ? (Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash-lite') : (Deno.env.get('OPENAI_MODEL') || 'gpt-5.6')
     const usageId = await reserveAIUsage(supabaseUrl, anonKey, authorization, 'chat_message', model, { source: 'fitness-chat', conversation_id: conversationId })
     usage = { id: usageId, url: supabaseUrl, key: anonKey, authorization }
     const outputText = geminiKey
-      ? await generateWithGemini(geminiKey, systemPrompt(permissions, context), history, message)
+      ? await generateWithGemini(geminiKey, model, systemPrompt(permissions, context), history, message)
       : await generateWithOpenAI(openaiKey!, systemPrompt(permissions, context), history, message)
     if (!outputText) return json({ error: 'A IA não retornou uma resposta válida.' }, 502)
     const parsed = JSON.parse(outputText)
     const assistant = validateAssistant(parsed, permissions)
-    await finalizeAIUsage(supabaseUrl, anonKey, authorization, usageId, true, { model_used: model })
+    const [userInsert, saved] = await Promise.all([
+      restWrite(supabaseUrl, authHeaders, 'ai_messages', { conversation_id: conversationId, user_id: user.id, role: 'user', content: message }),
+      restWrite(supabaseUrl, authHeaders, 'ai_messages', {
+        conversation_id: conversationId, user_id: user.id, role: 'assistant', content: assistant.reply,
+        action: assistant.action, action_status: assistant.action ? 'pending' : null,
+      }),
+      finalizeAIUsage(supabaseUrl, anonKey, authorization, usageId, true, { model_used: model }),
+    ])
     usage = null
-    const userInsert = await restWrite(supabaseUrl, authHeaders, 'ai_messages', { conversation_id: conversationId, user_id: user.id, role: 'user', content: message })
     if (!userInsert.ok) return json({ error: 'Não foi possível salvar sua mensagem.' }, 502)
-    const saved = await restWrite(supabaseUrl, authHeaders, 'ai_messages', {
-      conversation_id: conversationId, user_id: user.id, role: 'assistant', content: assistant.reply,
-      action: assistant.action, action_status: assistant.action ? 'pending' : null,
-    })
     if (!saved.ok) return json({ error: 'A resposta foi criada, mas não pôde ser salva.' }, 502)
-    await fetch(`${supabaseUrl}/rest/v1/ai_conversations?id=eq.${encodeURIComponent(conversationId)}&user_id=eq.${encodeURIComponent(user.id)}`, { method: 'PATCH', headers: { ...authHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ updated_at: new Date().toISOString() }) })
+    void fetch(`${supabaseUrl}/rest/v1/ai_conversations?id=eq.${encodeURIComponent(conversationId)}&user_id=eq.${encodeURIComponent(user.id)}`, { method: 'PATCH', headers: { ...authHeaders, 'Content-Type': 'application/json' }, body: JSON.stringify({ updated_at: new Date().toISOString() }) })
     return json({ userMessage: userInsert.data?.[0], assistantMessage: saved.data?.[0] })
   } catch (error) {
     if (usage) await finalizeAIUsage(usage.url, usage.key, usage.authorization, usage.id, false)
@@ -114,20 +120,43 @@ Deno.serve(async (request) => {
 })
 
 async function gatherContext(base: string, headers: Record<string,string>, userId: string, permissions: Record<string,boolean>) {
-  const today = localDate(new Date()), since = localDate(new Date(Date.now() - 13 * 86400000))
+  const today = localDate(new Date()), since = localDate(new Date(Date.now() - 6 * 86400000))
   const tasks: Array<Promise<any>> = [], labels: string[] = []
   const add = (label: string, path: string) => { labels.push(label); tasks.push(restGet(base, headers, path)) }
-  if (permissions.profile) add('profile', `profiles?id=eq.${userId}&select=full_name,birth_date,height_cm,experience_level,training_locations,equipment`)
-  if (permissions.objective) add('objective', `profiles?id=eq.${userId}&select=goal`)
-  if (permissions.workouts) add('workouts', `workouts?user_id=eq.${userId}&is_active=eq.true&select=id,title,focus,duration,scheduled_days,notes,exercises(id,name,sets_count,repetitions_text,rest_seconds,substitutions)&limit=12`)
-  if (permissions.history) add('history', `workout_sessions?user_id=eq.${userId}&started_at=gte.${since}T00:00:00&select=workout_name,status,started_at,duration_seconds,volume_total,pr_count&order=started_at.desc&limit=30`)
-  if (permissions.nutrition) add('nutrition', `daily_stats?user_id=eq.${userId}&date=gte.${since}&select=date,calories_current,calories_goal,protein_current,protein_goal,carbs_current,carbs_goal&order=date.desc`)
-  if (permissions.steps) add('steps', `step_records?user_id=eq.${userId}&occurred_on=gte.${since}&select=occurred_on,steps,distance_km&order=occurred_on.desc&limit=60`)
-  if (permissions.water) add('water', `daily_stats?user_id=eq.${userId}&date=gte.${since}&select=date,water_current,water_goal&order=date.desc`)
-  if (permissions.weight) add('weight', `body_progress_entries?user_id=eq.${userId}&select=recorded_at,weight_kg&order=recorded_at.desc&limit=20`)
-  if (permissions.goals) add('goals', `personal_goals?user_id=eq.${userId}&status=in.(active,completed,overdue)&select=id,type,name,target_value,progress_value,unit,end_date,status&order=created_at.desc&limit=30`)
+  if (permissions.profile || permissions.objective) add('profile', `profiles?id=eq.${userId}&select=full_name,birth_date,height_cm,experience_level,training_locations,equipment,goal`)
+  if (permissions.workouts) add('workouts', `workouts?user_id=eq.${userId}&is_active=eq.true&select=id,title,focus,duration,scheduled_days,notes,exercises(id,name,sets_count,repetitions_text,rest_seconds,substitutions)&limit=6`)
+  if (permissions.history) add('history', `workout_sessions?user_id=eq.${userId}&started_at=gte.${since}T00:00:00&select=workout_name,status,started_at,duration_seconds,volume_total,pr_count&order=started_at.desc&limit=12`)
+  if (permissions.nutrition || permissions.water) add('daily', `daily_stats?user_id=eq.${userId}&date=gte.${since}&select=date,calories_current,calories_goal,protein_current,protein_goal,carbs_current,carbs_goal,water_current,water_goal&order=date.desc`)
+  if (permissions.steps) add('steps', `step_records?user_id=eq.${userId}&occurred_on=gte.${since}&select=occurred_on,steps,distance_km&order=occurred_on.desc&limit=21`)
+  if (permissions.weight) add('weight', `body_progress_entries?user_id=eq.${userId}&select=recorded_at,weight_kg&order=recorded_at.desc&limit=8`)
+  if (permissions.goals) add('goals', `personal_goals?user_id=eq.${userId}&status=in.(active,completed,overdue)&select=id,type,name,target_value,progress_value,unit,end_date,status&order=created_at.desc&limit=12`)
   const results = await Promise.all(tasks), context: Record<string,unknown> = { today }
-  results.forEach((result,index) => { context[labels[index]] = result.ok ? result.data : { unavailable: true } })
+  results.forEach((result,index) => {
+    const label = labels[index], data = result.ok ? result.data : { unavailable: true }
+    if (label === 'profile') {
+      if (!result.ok) {
+        if (permissions.profile) context.profile = data
+        if (permissions.objective) context.objective = data
+        return
+      }
+      const row = Array.isArray(data) ? data[0] : null
+      if (permissions.profile) context.profile = row ? [{ full_name: row.full_name, birth_date: row.birth_date, height_cm: row.height_cm, experience_level: row.experience_level, training_locations: row.training_locations, equipment: row.equipment }] : []
+      if (permissions.objective) context.objective = row ? [{ goal: row.goal }] : []
+      return
+    }
+    if (label === 'daily') {
+      if (!result.ok) {
+        if (permissions.nutrition) context.nutrition = data
+        if (permissions.water) context.water = data
+        return
+      }
+      const rows = Array.isArray(data) ? data : []
+      if (permissions.nutrition) context.nutrition = rows.map((row: Record<string, unknown>) => ({ date: row.date, calories_current: row.calories_current, calories_goal: row.calories_goal, protein_current: row.protein_current, protein_goal: row.protein_goal, carbs_current: row.carbs_current, carbs_goal: row.carbs_goal }))
+      if (permissions.water) context.water = rows.map((row: Record<string, unknown>) => ({ date: row.date, water_current: row.water_current, water_goal: row.water_goal }))
+      return
+    }
+    context[label] = data
+  })
   return context
 }
 
@@ -148,29 +177,25 @@ function systemPrompt(permissions: Record<string,boolean>, context: Record<strin
 }
 
 async function generateWithOpenAI(key:string,instructions:string,history:Array<Record<string,unknown>>,message:string) {
-  const response = await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:Deno.env.get('OPENAI_MODEL')||'gpt-5.6',store:false,reasoning:{effort:'low'},text:{verbosity:'low',format:{type:'json_schema',name:'fitness_assistant_response',strict:true,schema:responseSchema}},instructions,input:[...history,{role:'user',content:message}],max_output_tokens:1800})})
+  const response = await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:Deno.env.get('OPENAI_MODEL')||'gpt-5.6',store:false,reasoning:{effort:'low'},text:{verbosity:'low',format:{type:'json_schema',name:'fitness_assistant_response',strict:true,schema:responseSchema}},instructions,input:[...history,{role:'user',content:message}],max_output_tokens:1000})})
   if(!response.ok){console.error('OpenAI error',response.status,(await response.text()).slice(0,600));throw new AIProviderError('openai',response.status)}
   const data=await response.json();return data.output?.flatMap((item:any)=>item.content??[]).find((item:any)=>item.type==='output_text')?.text??''
 }
 
-async function generateWithGemini(key:string,instructions:string,history:Array<Record<string,unknown>>,message:string) {
+async function generateWithGemini(key:string,model:string,instructions:string,history:Array<Record<string,unknown>>,message:string) {
   const transcript=history.map((item)=>`${item.role==='assistant'?'ASSISTENTE':'USUÁRIO'}: ${item.content}`).join('\n')
-  const configuredModel = Deno.env.get('GEMINI_MODEL')
-  const models = [...new Set([configuredModel, 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'].filter(Boolean))] as string[]
-  let lastStatus = 503
-  for (const model of models) {
-    try {
-      const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:instructions}]},contents:[{parts:[{text:`HISTÓRICO:\n${transcript}\n\nUSUÁRIO: ${message}\n\nResponda somente com JSON válido no formato: ${JSON.stringify(responseSchema)}`}]}],generationConfig:{responseMimeType:'application/json',temperature:.25,maxOutputTokens:2200}})})
-      if(!response.ok){lastStatus=response.status;console.error('Gemini error',model,response.status,(await response.text()).slice(0,600));if([400,401,403,429].includes(response.status))throw new AIProviderError('gemini',response.status);continue}
-      const data=await response.json();const output=data?.candidates?.[0]?.content?.parts?.map((part:any)=>part.text??'').join('')??''
-      if(output) return output
-      console.error('Gemini empty response',model)
-    } catch (error) {
-      if(error instanceof AIProviderError) throw error
-      console.error('Gemini network error',model,error)
-    }
+  try {
+    const response=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:instructions}]},contents:[{parts:[{text:`HISTÓRICO:\n${transcript}\n\nUSUÁRIO: ${message}\n\nResponda somente com JSON válido no formato: ${JSON.stringify(responseSchema)}`}]}],generationConfig:{responseMimeType:'application/json',temperature:.2,maxOutputTokens:900,thinkingConfig:{thinkingLevel:'minimal'}}})})
+    if(!response.ok){console.error('Gemini error',model,response.status,(await response.text()).slice(0,600));throw new AIProviderError('gemini',response.status)}
+    const data=await response.json();const output=data?.candidates?.[0]?.content?.parts?.map((part:any)=>part.text??'').join('')??''
+    if(output) return output
+    console.error('Gemini empty response',model)
+    throw new AIProviderError('gemini',502)
+  } catch (error) {
+    if(error instanceof AIProviderError) throw error
+    console.error('Gemini network error',model,error)
+    throw new AIProviderError('gemini',503)
   }
-  throw new AIProviderError('gemini',lastStatus)
 }
 
 function validateAssistant(value: any, permissions: Record<string,boolean>) {
