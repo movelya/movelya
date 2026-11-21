@@ -9,6 +9,44 @@
 }
 :root[data-theme="light"] .vita-route-stage :is(input, select, textarea)::placeholder { color: #789083 !important; }
 
+/* Shared semantic tokens make new screens theme-safe by default. */
+:root {
+  --theme-canvas: #080b09;
+  --theme-surface: #101512;
+  --theme-surface-soft: #151c18;
+  --theme-text: #f3f7f5;
+  --theme-muted: #9ba9a1;
+  --theme-line: #243029;
+  --theme-focus: #58e9a4;
+}
+:root[data-theme="light"] {
+  --theme-canvas: #eef5f0;
+  --theme-surface: #ffffff;
+  --theme-surface-soft: #f7fcf9;
+  --theme-text: #183d2a;
+  --theme-muted: #60796a;
+  --theme-line: #c8ded1;
+  --theme-focus: #087f54;
+}
+
+/* Keyboard navigation is visible everywhere, including legacy route styles. */
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--theme-focus) !important;
+  outline-offset: 3px;
+}
+@media (prefers-contrast: more) {
+  :root[data-theme="light"] .vita-route-stage :is(.card, .panel, article, input, select, textarea, button) { border-color: #547665 !important; }
+  :root[data-theme="light"] .vita-route-stage :is(p, small, label) { color: #365b48 !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vita-route-stage *, .vita-route-stage *::before, .vita-route-stage *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* Large data lists defer off-screen rendering on mobile without changing data. */
+@media (max-width: 720px) {
+  :is(.community-post, .water-log-list article, .steps-record-list article, .body-history article, .goal-card, .food-db-card, .notification-feed article, .recent-workouts article) { content-visibility: auto; contain-intrinsic-size: auto 112px; }
+}
+
 /* Body evolution */
 :root[data-theme="light"] .body-page :is(.body-chart-card, .body-history, .photo-compare, .photo-set-card, .body-summary) { color: #193e2b !important; background: #fff !important; border-color: #d1e3d8 !important; }
 :root[data-theme="light"] .body-page :is(.body-tabs button, .body-history article, .photo-set-card footer button, .photo-upload-grid label, .photo-privacy-toggle) { color: #244734 !important; background: #f8fcf9 !important; border-color: #d1e3d8 !important; }

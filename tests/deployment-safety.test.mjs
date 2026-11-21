@@ -39,3 +39,14 @@ test('Notification permission prompt is shown once per user and device', () => {
   assert.match(prompt, /Notification\.permission !== 'default'/)
   assert.match(prompt, /notificationService\.enablePush/)
 })
+
+test('light theme audit protects legacy feature styles and keyboard focus', () => {
+  const audit = read('src/lightThemeAudit.css')
+  assert.match(read('src/main.tsx'), /lightThemeAudit\.css/)
+  assert.match(audit, /:root\[data-theme="light"\]/)
+  assert.match(audit, /:focus-visible/)
+  assert.match(audit, /prefers-reduced-motion/)
+  assert.match(audit, /\.body-page/)
+  assert.match(audit, /\.water-page/)
+  assert.match(audit, /\.community-page/)
+})
