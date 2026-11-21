@@ -11,7 +11,7 @@ const mainItems: { id: PageId; label: string; icon: typeof LayoutDashboard }[] =
 ]
 
 export function Logo() {
-  return <div className="logo"><div className="logo__mark"><span>J</span></div><div><strong>Jhow Fit</strong><small>EVOLUA TODO DIA</small></div></div>
+  return <div className="logo"><div className="logo__mark"><span>M</span></div><div><strong>MOVELYA</strong><small>SAÚDE EM MOVIMENTO</small></div></div>
 }
 
 export function Sidebar() {

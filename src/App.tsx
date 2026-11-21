@@ -1,34 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import { VitaHeader } from './components/VitaHeader'
 import { MobileNavigation, VitaSidebar } from './components/VitaNavigation'
 import { useAuth } from './contexts/AuthContext'
-import { AuthPage } from './pages/AuthPages'
-import { DailyDashboardPage } from './pages/DailyDashboardPage'
-import { NutritionPage } from './pages/Nutrition'
-import { FoodDatabasePage } from './pages/FoodDatabasePage'
-import { WaterPage } from './pages/WaterPage'
-import { StepsPage } from './pages/StepsPage'
-import { TrainingHubPage } from './pages/TrainingHubPage'
 import { useOnboardingStatus } from './hooks/useOnboardingStatus'
-import { OnboardingPage } from './pages/OnboardingPage'
-import { ProfilePage } from './pages/ProfilePage'
-import { HealthIntegrationsPage } from './pages/HealthIntegrationsPage'
-import { BodyEvolutionPage } from './pages/BodyEvolutionPage'
-import { GoalsPage } from './pages/GoalsPage'
-import { WeeklyReportPage } from './pages/WeeklyReportPage'
-import { FitnessChatPage } from './pages/FitnessChatPage'
-import { NotificationsPage } from './pages/NotificationsPage'
-import { AchievementsPage } from './pages/AchievementsPage'
-import { CommunityPage } from './pages/CommunityPage'
-import { CommunityProfilePage } from './pages/CommunityProfilePage'
 import { PwaInstallPrompt } from './components/PwaInstallPrompt'
 import { PwaUpdatePrompt } from './components/PwaUpdatePrompt'
 import { PlanWelcomeModal } from './components/PlanWelcomeModal'
-import { PrivacyPage } from './pages/PrivacyPage'
-import { AdminPage } from './pages/AdminPage'
-import { PlansPage } from './pages/PlansPage'
-import { CheckoutConfirmationPage, CheckoutPage } from './pages/CheckoutPages'
 import { ErrorPage, LoadingScreen, NotFoundPage, RoutePlaceholder } from './pages/SystemPages'
 import { useVitaRoute } from './hooks/useVitaRoute'
 import { isPrivateRoute } from './utils/navigation'
@@ -38,6 +16,30 @@ import './pwa/registerServiceWorker'
 import './productTheme.css'
 
 type ThemePreference = 'light' | 'dark' | 'system'
+
+const AuthPage = lazy(() => import('./pages/AuthPages').then(({ AuthPage }) => ({ default: AuthPage })))
+const DailyDashboardPage = lazy(() => import('./pages/DailyDashboardPage').then(({ DailyDashboardPage }) => ({ default: DailyDashboardPage })))
+const NutritionPage = lazy(() => import('./pages/Nutrition').then(({ NutritionPage }) => ({ default: NutritionPage })))
+const FoodDatabasePage = lazy(() => import('./pages/FoodDatabasePage').then(({ FoodDatabasePage }) => ({ default: FoodDatabasePage })))
+const WaterPage = lazy(() => import('./pages/WaterPage').then(({ WaterPage }) => ({ default: WaterPage })))
+const StepsPage = lazy(() => import('./pages/StepsPage').then(({ StepsPage }) => ({ default: StepsPage })))
+const TrainingHubPage = lazy(() => import('./pages/TrainingHubPage').then(({ TrainingHubPage }) => ({ default: TrainingHubPage })))
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then(({ OnboardingPage }) => ({ default: OnboardingPage })))
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(({ ProfilePage }) => ({ default: ProfilePage })))
+const HealthIntegrationsPage = lazy(() => import('./pages/HealthIntegrationsPage').then(({ HealthIntegrationsPage }) => ({ default: HealthIntegrationsPage })))
+const BodyEvolutionPage = lazy(() => import('./pages/BodyEvolutionPage').then(({ BodyEvolutionPage }) => ({ default: BodyEvolutionPage })))
+const GoalsPage = lazy(() => import('./pages/GoalsPage').then(({ GoalsPage }) => ({ default: GoalsPage })))
+const WeeklyReportPage = lazy(() => import('./pages/WeeklyReportPage').then(({ WeeklyReportPage }) => ({ default: WeeklyReportPage })))
+const FitnessChatPage = lazy(() => import('./pages/FitnessChatPage').then(({ FitnessChatPage }) => ({ default: FitnessChatPage })))
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(({ NotificationsPage }) => ({ default: NotificationsPage })))
+const AchievementsPage = lazy(() => import('./pages/AchievementsPage').then(({ AchievementsPage }) => ({ default: AchievementsPage })))
+const CommunityPage = lazy(() => import('./pages/CommunityPage').then(({ CommunityPage }) => ({ default: CommunityPage })))
+const CommunityProfilePage = lazy(() => import('./pages/CommunityProfilePage').then(({ CommunityProfilePage }) => ({ default: CommunityProfilePage })))
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then(({ PrivacyPage }) => ({ default: PrivacyPage })))
+const AdminPage = lazy(() => import('./pages/AdminPage').then(({ AdminPage }) => ({ default: AdminPage })))
+const PlansPage = lazy(() => import('./pages/PlansPage').then(({ PlansPage }) => ({ default: PlansPage })))
+const CheckoutPage = lazy(() => import('./pages/CheckoutPages').then(({ CheckoutPage }) => ({ default: CheckoutPage })))
+const CheckoutConfirmationPage = lazy(() => import('./pages/CheckoutPages').then(({ CheckoutConfirmationPage }) => ({ default: CheckoutConfirmationPage })))
 
 export default function App() {
   const { route, status, navigate, retry } = useVitaRoute()
@@ -50,7 +52,6 @@ export default function App() {
   const [showQuotaUpgrade, setShowQuotaUpgrade] = useState(false)
   const routeStageRef = useRef<HTMLDivElement>(null)
   const planWelcomeCheckRef = useRef<string | null>(null)
-  const siteOrigin = typeof window === 'undefined' ? '' : window.location.origin
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -74,7 +75,7 @@ export default function App() {
     if (!user) return
     void notificationService.startReminderScheduler(user.id)
     return () => notificationService.stopReminderScheduler()
-  }, [user?.id])
+  }, [user])
 
   useEffect(() => {
     if (!user || !onboarding.completed || onboarding.loading || !route || ['configuracao-inicial', 'checkout', 'checkout-confirmado'].includes(route.id)) return
@@ -95,7 +96,7 @@ export default function App() {
     })
 
     return () => { cancelled = true }
-  }, [user?.id, onboarding.completed, onboarding.loading, route?.id])
+  }, [user, onboarding.completed, onboarding.loading, route])
 
   useEffect(() => {
     if (!user || showPlanWelcome || !onboarding.completed || onboarding.loading || !route || ['configuracao-inicial', 'checkout', 'checkout-confirmado'].includes(route.id)) return
@@ -109,7 +110,7 @@ export default function App() {
         setShowQuotaUpgrade(true)
       }
     }).catch(() => undefined)
-  }, [user?.id, showPlanWelcome, onboarding.completed, onboarding.loading, route?.id])
+  }, [user, showPlanWelcome, onboarding.completed, onboarding.loading, route])
 
   function closePlanWelcome() {
     if (user) window.localStorage.setItem(`MOVELYA.plan-welcome.v1.${user.id}`, 'seen')
@@ -175,9 +176,9 @@ export default function App() {
       return
     }
     if (user && route?.public && route.id !== 'redefinir-senha' && route.id !== 'confirmar-email') navigate('/inicio')
-    if (user && route?.id === 'sair') handleLogout()
+    if (user && route?.id === 'sair') void logout().then(() => navigate('/entrar'))
     if (user && route?.id === 'administracao' && role === 'user') navigate('/inicio')
-  }, [authLoading, roleLoading, onboarding.loading, onboarding.completed, status, recoveryMode, route, user, role, navigate])
+  }, [authLoading, roleLoading, onboarding.loading, onboarding.completed, status, recoveryMode, route, user, role, navigate, logout])
 
   async function handleLogout() {
     await logout()
@@ -187,19 +188,19 @@ export default function App() {
   if (status === 'booting' || authLoading || roleLoading || (Boolean(user) && onboarding.loading)) return <LoadingScreen />
   if (status === 'error') return <ErrorPage onRetry={retry} />
   if (import.meta.env.DEV && !user && route?.id === 'configuracao-inicial') {
-    return <OnboardingPage userId="development-preview" initialName="João Silva" onComplete={() => undefined} />
+    return <Suspense fallback={<LoadingScreen />}><OnboardingPage userId="development-preview" initialName="João Silva" onComplete={() => undefined} /></Suspense>
   }
   if ((!user && isPrivateRoute(route) && !(import.meta.env.DEV && (route?.id === 'inicio' || route?.id === 'conquistas' || route?.id === 'comunidade'))) || (recoveryMode && route?.id !== 'redefinir-senha')) return <LoadingScreen />
-  if (route?.public) return <><PwaInstallPrompt /><PwaUpdatePrompt /><AuthPage routeId={route.id} navigate={navigate} /></>
+  if (route?.public) return <><PwaInstallPrompt /><PwaUpdatePrompt /><Suspense fallback={<LoadingScreen />}><AuthPage routeId={route.id} navigate={navigate} /></Suspense></>
   if (user && route?.id === 'configuracao-inicial') {
-    return <OnboardingPage
+    return <Suspense fallback={<LoadingScreen />}><OnboardingPage
       userId={user.id}
       initialName={String(user.user_metadata?.full_name ?? '')}
       onComplete={() => {
         onboarding.markCompleted()
         navigate('/inicio')
       }}
-    />
+    /></Suspense>
   }
 
   return (
@@ -207,15 +208,6 @@ export default function App() {
       <PwaInstallPrompt />
       <PwaUpdatePrompt />
       {showPlanWelcome ? <PlanWelcomeModal onChooseFree={closePlanWelcome} onChoosePaid={(planCode) => { closePlanWelcome(); navigate(`/checkout?plan=${planCode}`) }} /> : showQuotaUpgrade && <PlanWelcomeModal mode="quota-warning" onChooseFree={closeQuotaUpgrade} onChoosePaid={(planCode) => { closeQuotaUpgrade(); navigate(`/checkout?plan=${planCode}`) }} />}
-      <title>MOVELYA — Saúde em movimento</title>
-      <link rel="manifest" href={`${import.meta.env.BASE_URL}manifest.webmanifest`} />
-      <meta name="description" content="Treinos, nutrição, hidratação e passos reunidos para acompanhar sua evolução no MOVELYA." />
-      <meta property="og:title" content="MOVELYA — Seu movimento, passo a passo." />
-      <meta property="og:description" content="Registre seus passos e acompanhe metas, sequência e ritmo semanal." />
-      <meta property="og:image" content={`${siteOrigin}${import.meta.env.BASE_URL}og.png`} />
-      <meta property="og:type" content="website" />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:image" content={`${siteOrigin}${import.meta.env.BASE_URL}og.png`} />
       <div className="vita-shell">
         <VitaSidebar
           activeRoute={route?.id}
@@ -244,7 +236,7 @@ export default function App() {
             </div>
             <div className="vita-content" aria-live="polite">
               <div ref={routeStageRef} key={`${route?.id ?? 'not-found'}:${typeof window === 'undefined' ? '' : window.location.search}`} className="vita-route-stage">
-              {route?.id === 'inicio' && (user || import.meta.env.DEV) ? (
+              <Suspense fallback={<LoadingScreen />}>{route?.id === 'inicio' && (user || import.meta.env.DEV) ? (
                 <DailyDashboardPage userId={user?.id ?? '00000000-0000-0000-0000-000000000000'} onNavigate={navigate} />
               ) : route?.id === 'dieta' && user ? (
                 <NutritionPage userId={user.id} onNavigate={navigate} />
@@ -290,7 +282,7 @@ export default function App() {
                 <RoutePlaceholder route={route} onNavigate={navigate} />
               ) : (
                 <NotFoundPage onNavigate={() => navigate('/inicio')} />
-              )}
+              )}</Suspense>
               </div>
             </div>
           </main>

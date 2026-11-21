@@ -1,4 +1,5 @@
-const VERSION = '2026.08.10.1'
+// Replaced by the production build so each deployment gets a fresh cache.
+const VERSION = '__BUILD_ID__'
 const STATIC_CACHE = `movelya-static-${VERSION}`
 
 self.addEventListener('install', (event) => {
@@ -10,13 +11,16 @@ self.addEventListener('install', (event) => {
     new URL('./manifest.webmanifest', scope).toString(),
     new URL('./icon-192.png', scope).toString(),
     new URL('./icon-512.png', scope).toString(),
-    new URL('./favicon.svg', scope).toString(),
+    new URL('./favicon.png', scope).toString(),
   ]
   event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(shell)))
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('movelya-static-') && key !== STATIC_CACHE).map((key) => caches.delete(key)))))
+  event.waitUntil(Promise.all([
+    caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('movelya-static-') && key !== STATIC_CACHE).map((key) => caches.delete(key)))),
+    self.clients.claim(),
+  ]))
 })
 
 self.addEventListener('message', (event) => {
@@ -32,17 +36,20 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(request, new URL('./offline.html', self.registration.scope).toString()))
     return
   }
-  if (['script', 'style', 'image', 'font'].includes(request.destination)) event.respondWith(cacheFirst(request))
+  // Code and styles must prefer the network so an API or schema rollout never
+  // leaves a signed-in member running an incompatible cached application.
+  if (['script', 'style'].includes(request.destination)) event.respondWith(networkFirst(request))
+  else if (['image', 'font'].includes(request.destination)) event.respondWith(cacheFirst(request))
 })
 
 self.addEventListener('push', (event) => {
-  let data = {}
+  let data
   try { data = event.data ? event.data.json() : {} } catch { data = { body: event.data ? event.data.text() : '' } }
   const title = data.title || 'MOVELYA'
   const options = {
     body: data.body || 'Você tem uma nova atualização.',
     icon: new URL('./icon-192.png', self.registration.scope).toString(),
-    badge: new URL('./favicon.svg', self.registration.scope).toString(),
+    badge: new URL('./icon-192.png', self.registration.scope).toString(),
     tag: data.tag || 'movelya-reminder',
     renotify: false,
     data: { url: data.url || './#/notificacoes' },
@@ -78,6 +85,6 @@ async function networkFirst(request, fallbackUrl) {
     if (response.ok) { const cache = await caches.open(STATIC_CACHE); await cache.put(request, response.clone()) }
     return response
   } catch {
-    return (await caches.match(request)) || (await caches.match(fallbackUrl)) || Response.error()
+    return (await caches.match(request)) || (fallbackUrl ? await caches.match(fallbackUrl) : undefined) || Response.error()
   }
 }

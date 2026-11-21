@@ -7,6 +7,8 @@ dist-github/
 !public/og.png
 !public/icon-192.png
 !public/icon-512.png
+!public/favicon.png
+!public/movelya-wordmark.png
 *.log
 *.tsbuildinfo
 vite.config.js

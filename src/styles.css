@@ -449,11 +449,10 @@ body { overflow-x: hidden; }
 .sidebar-close { display: none; width: 38px; height: 38px; border: 1px solid var(--vita-border); background: var(--vita-surface); border-radius: 10px; place-items: center; cursor: pointer; }
 .vita-logo { display: inline-flex; align-items: center; gap: 11px; }
 .vita-logo__mark { position: relative; width: 39px; height: 39px; display: grid; place-items: center; overflow: hidden; border-radius: 12px 12px 12px 4px; color: #052719; background: #0b1711; box-shadow: 0 8px 25px rgba(39, 214, 143, .14); font: 800 22px "Manrope", sans-serif; }
-.vita-logo__mark img { position: absolute; width: 130px; height: 130px; max-width: none; left: -46px; top: -37px; object-fit: cover; display: block; transform: none; }
-.vita-logo__name { font: 700 18px "Manrope", sans-serif; letter-spacing: -.65px; }
-.vita-logo__name strong { color: var(--vita-green); }
-.vita-logo.is-compact .vita-logo__mark { width: 34px; height: 34px; font-size: 19px; border-radius: 10px 10px 10px 3px; }.vita-logo.is-compact .vita-logo__mark img { width: 114px; height: 114px; left: -40px; top: -33px; }
-.vita-logo.is-compact .vita-logo__name { font-size: 15px; }
+.vita-logo__mark img { width: 100%; height: 100%; object-fit: cover; display: block; transform: none; }
+.vita-logo__wordmark { width: 98px; height: 53px; object-fit: cover; object-position: center; display: block; }
+.vita-logo.is-compact .vita-logo__mark { width: 34px; height: 34px; font-size: 19px; border-radius: 10px 10px 10px 3px; }
+.vita-logo.is-compact .vita-logo__wordmark { width: 84px; height: 45px; }
 .nav-section-label { margin: 42px 13px 10px; color: #526058; font-size: 8px; letter-spacing: 1.75px; font-weight: 800; }
 .desktop-nav { min-height: 0; flex: 1 1 auto; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; scrollbar-width: thin; scrollbar-color: #2b4034 transparent; padding-right: 3px; }
 .desktop-nav button { position: relative; width: 100%; min-height: 43px; padding: 0 13px; border: 0; border-radius: 11px; display: flex; align-items: center; gap: 12px; color: #849189; background: transparent; font-size: 12px; font-weight: 600; cursor: pointer; transition: color .18s ease, background .18s ease, transform .18s ease; }
@@ -536,7 +535,7 @@ body { overflow-x: hidden; }
 .loading-screen { align-content: center; }
 .loading-brand { display: flex; align-items: center; gap: 12px; }
 .loading-brand > span { width: 45px; height: 45px; display: grid; place-items: center; overflow: hidden; border-radius: 14px 14px 14px 4px; color: #052719; background: var(--vita-green); font: 800 25px "Manrope"; }
-.loading-brand > span img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(2.45); transform-origin: 50% 45%; }
+.loading-brand > span img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .loading-brand strong { font: 700 23px "Manrope"; }
 .loading-brand em { color: var(--vita-green); font-style: normal; }
 .loading-line { width: 180px; height: 3px; margin-top: 26px; overflow: hidden; border-radius: 4px; background: #1e2822; }
@@ -597,7 +596,7 @@ body { overflow-x: hidden; }
 }
 
 @media (max-width: 370px) {
-  .vita-logo.is-compact .vita-logo__name { display: none; }
+  .vita-logo.is-compact .vita-logo__wordmark { display: none; }
   .placeholder-hero { gap: 14px; }
   .placeholder-hero p { max-width: 245px; }
   .next-stage { grid-template-columns: 34px 1fr auto; gap: 9px; }
