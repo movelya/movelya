@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
@@ -27,9 +27,17 @@ export function AuthPage({ routeId, navigate }: AuthPageProps) {
       <aside className="auth-story">
         <VitaLogo />
         <div className="auth-story__content">
-          <span>EVOLUA COM PROPÓSITO</span>
-          <h2>Seu bem-estar começa com um passo.</h2>
-          <p>Treinos, alimentação e evolução reunidos em uma experiência simples e pessoal.</p>
+          <span className="auth-story__eyebrow"><i /> EVOLUA COM PROPÓSITO</span>
+          <h2>Um ritmo mais leve.<br /><em>Uma evolução real.</em></h2>
+          <p>Treinos, alimentação e progresso organizados para você seguir em frente — no seu tempo.</p>
+          <div className="auth-story__proof"><b>Seu espaço</b><span>para cuidar da rotina</span></div>
+        </div>
+        <div className="auth-story__scene" aria-hidden="true">
+          <div className="auth-orbit auth-orbit--one" />
+          <div className="auth-orbit auth-orbit--two" />
+          <div className="auth-scene-card auth-scene-card--main"><span>SEQUÊNCIA ATUAL</span><strong>08 <small>dias</small></strong><div><i /><i /><i /><i /><i /><i /><i /></div></div>
+          <div className="auth-scene-card auth-scene-card--metric"><span>HOJE</span><strong>72<small>%</small></strong><p>da sua meta</p></div>
+          <div className="auth-scene-pulse"><i /><i /><i /></div>
         </div>
         <small>MOVELYA · Sua jornada, no seu ritmo.</small>
       </aside>
@@ -243,7 +251,7 @@ function ConfirmEmailPage({ navigate }: Pick<AuthPageProps, 'navigate'>) {
 
 function AuthCard({ eyebrow, title, description, children }: { eyebrow: string; title: string; description: string; children: ReactNode }) {
   return (
-    <section className="auth-card">
+    <section className="auth-card" key={eyebrow}>
       <div className="auth-card__heading"><span>{eyebrow}</span><h1>{title}</h1><p>{description}</p></div>
       {children}
     </section>
