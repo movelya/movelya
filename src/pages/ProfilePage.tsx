@@ -85,12 +85,6 @@ export function ProfilePage({ userId, onLogout, onNavigate }: { userId: string; 
         <div className="profile-hub__main">
           <section className="profile-plan-card">
             {plan ? <CurrentPlanCard plan={plan} onNavigate={onNavigate} /> : planError ? <div className="profile-plan-card__unavailable"><CircleAlert size={20} /><div><strong>Assinatura indisponível</strong><span>{planError}</span></div><button onClick={() => onNavigate('/planos')}>Ver planos <ChevronRight size={16} /></button></div> : <div className="profile-plan-card__loading"><LoaderCircle className="is-spinning" size={21} /> Carregando seu plano...</div>}
-            <div className="profile-plan-card__top"><div className="profile-plan-card__symbol"><Crown size={20} /></div><span>SEU PLANO</span></div>
-            <div className="profile-plan-card__content">
-              <div><h2>MOVELYA Plus</h2><p>Planos inteligentes, acompanhamento e recomendações personalizadas para sua rotina.</p></div>
-              <button className="profile-plan-card__button" onClick={() => onNavigate('/planos')}>Gerenciar assinatura <ChevronRight size={17} /></button>
-            </div>
-            <div className="profile-plan-card__footer"><span><Sparkles size={15} /> Período de teste ativo</span><small>Renovação em 17 de setembro</small></div>
           </section>
 
           <section className="profile-section">

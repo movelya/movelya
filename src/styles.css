@@ -450,9 +450,10 @@ body { overflow-x: hidden; }
 .vita-logo { display: inline-flex; align-items: center; gap: 11px; }
 .vita-logo__mark { position: relative; width: 39px; height: 39px; display: grid; place-items: center; overflow: hidden; border-radius: 12px 12px 12px 4px; color: #052719; background: #0b1711; box-shadow: 0 8px 25px rgba(39, 214, 143, .14); font: 800 22px "Manrope", sans-serif; }
 .vita-logo__mark img { width: 100%; height: 100%; object-fit: cover; display: block; transform: none; }
-.vita-logo__wordmark { width: 98px; height: 53px; object-fit: cover; object-position: center; display: block; }
+.vita-logo__name { color: var(--vita-text); font: 800 18px "Manrope", sans-serif; letter-spacing: -1px; }
+.vita-logo__name strong { color: var(--vita-green); }
 .vita-logo.is-compact .vita-logo__mark { width: 34px; height: 34px; font-size: 19px; border-radius: 10px 10px 10px 3px; }
-.vita-logo.is-compact .vita-logo__wordmark { width: 84px; height: 45px; }
+.vita-logo.is-compact .vita-logo__name { font-size: 15px; }
 .nav-section-label { margin: 42px 13px 10px; color: #526058; font-size: 8px; letter-spacing: 1.75px; font-weight: 800; }
 .desktop-nav { min-height: 0; flex: 1 1 auto; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; scrollbar-width: thin; scrollbar-color: #2b4034 transparent; padding-right: 3px; }
 .desktop-nav button { position: relative; width: 100%; min-height: 43px; padding: 0 13px; border: 0; border-radius: 11px; display: flex; align-items: center; gap: 12px; color: #849189; background: transparent; font-size: 12px; font-weight: 600; cursor: pointer; transition: color .18s ease, background .18s ease, transform .18s ease; }
@@ -596,7 +597,7 @@ body { overflow-x: hidden; }
 }
 
 @media (max-width: 370px) {
-  .vita-logo.is-compact .vita-logo__wordmark { display: none; }
+  .vita-logo.is-compact .vita-logo__name { display: none; }
   .placeholder-hero { gap: 14px; }
   .placeholder-hero p { max-width: 245px; }
   .next-stage { grid-template-columns: 34px 1fr auto; gap: 9px; }

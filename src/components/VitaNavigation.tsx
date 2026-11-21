@@ -16,7 +16,7 @@ export function VitaLogo({ compact = false }: { compact?: boolean }) {
       <span className="vita-logo__mark" aria-hidden="true">
         <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="" />
       </span>
-      <img className="vita-logo__wordmark" src={`${import.meta.env.BASE_URL}movelya-wordmark.png`} alt="MOVELYA" />
+      <span className="vita-logo__name">MOVE<strong>LYA</strong></span>
     </div>
   )
 }

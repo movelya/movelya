@@ -969,6 +969,19 @@ textarea:focus-visible {
 @media (max-width: 520px) { .auth-story { min-height: 198px; }.auth-story__content { margin-top: 34px; }.auth-story__content h2 { margin-top: 14px !important; font-size: 32px !important; letter-spacing: -2.3px !important; }.auth-main { padding: 24px 16px 42px !important; }.auth-card { padding: 27px 21px !important; border-radius: 24px !important; }.auth-card__heading h1 { font-size: 30px !important; }.auth-field > div, .auth-submit { min-height: 52px !important; height: 52px !important; } }
 @media (prefers-reduced-motion: reduce) { .auth-card, .auth-story__eyebrow i, .auth-orbit, .auth-scene-card, .auth-scene-pulse i { animation: none !important; }.auth-field > div, .auth-submit { transition: none !important; } }
 
+/* Free plans use a light surface; keep their data readable despite the premium-card defaults. */
+:root[data-theme] .vita-route-stage .profile-plan-card:has(.profile-plan-card__loaded.is-free) {
+  border-color: #82b99d !important;
+  background: linear-gradient(135deg, #ffffff, #e8f7ee) !important;
+}
+:root[data-theme] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free { color: #183b29 !important; background: transparent !important; }
+:root[data-theme] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free :is(h2, p, .profile-plan-card__footer) { color: #214b35 !important; }
+:root[data-theme] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__top,
+:root[data-theme] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__footer span { color: #148557 !important; }
+:root[data-theme] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__symbol { color: #b8750f !important; background: #fff7e7 !important; }
+:root[data-theme] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__button { color: #fff !important; background: #087a4d !important; }
+:root[data-theme] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__footer { border-color: rgba(20,133,87,.17) !important; }
+
 /* Home reference composition: a calm, single-column daily dashboard. */
 .daily-hero-portrait{background:radial-gradient(circle at 45% 32%,#f4fff8,#d8f5e3 64%,#bee6cf)!important}.daily-hero-portrait>svg{opacity:.7!important}.daily-focus-card__art{background:radial-gradient(ellipse at 55% 65%,rgba(33,219,125,.34),transparent 62%),repeating-radial-gradient(circle at 60% 50%,rgba(146,255,194,.09) 0 2px,transparent 3px 15px)!important}
 
