@@ -1,0 +1,52 @@
+/* Light theme consistency layer. Some feature pages load their own legacy CSS
+   after the app shell; these explicit tokens keep their controls and reading
+   surfaces aligned with the selected light theme. */
+:root[data-theme="light"] .vita-route-stage :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  color: #183d2a !important;
+  border-color: #c8ded1 !important;
+  background: #fff !important;
+  box-shadow: inset 0 1px rgba(16,76,45,.03) !important;
+}
+:root[data-theme="light"] .vita-route-stage :is(input, select, textarea)::placeholder { color: #789083 !important; }
+
+/* Body evolution */
+:root[data-theme="light"] .body-page :is(.body-chart-card, .body-history, .photo-compare, .photo-set-card, .body-summary) { color: #193e2b !important; background: #fff !important; border-color: #d1e3d8 !important; }
+:root[data-theme="light"] .body-page :is(.body-tabs button, .body-history article, .photo-set-card footer button, .photo-upload-grid label, .photo-privacy-toggle) { color: #244734 !important; background: #f8fcf9 !important; border-color: #d1e3d8 !important; }
+:root[data-theme="light"] .body-page :is(.body-history article strong, .photo-upload-grid strong, .photo-privacy-toggle strong, .body-empty strong) { color: #1b402d !important; }
+:root[data-theme="light"] .body-page :is(.body-history article small, .body-history article > p, .photo-set-card p, .photo-privacy-toggle small, .body-empty, .body-chart-empty) { color: #647c6d !important; }
+:root[data-theme="light"] .body-page .body-tabs button.is-active { color: #fff !important; background: #0e8b5c !important; border-color: #0e8b5c !important; }
+:root[data-theme="light"] .body-page .body-hero { color: #fff !important; background: radial-gradient(circle at 85% 12%, rgba(96,237,168,.30), transparent 34%), linear-gradient(130deg, #06422e, #08754f) !important; }
+
+/* Water */
+:root[data-theme="light"] .water-page :is(.water-progress-card, .water-stat, .water-quick, .water-history, .water-weekly) { color: #183e2c !important; background: #fff !important; border-color: #d1e2d9 !important; }
+:root[data-theme="light"] .water-page :is(.water-log-list article, .water-reminder-toggle, .water-reminder-times > div button, .water-quick-actions button) { color: #24513b !important; background: #f7fcf9 !important; border-color: #c9dfd5 !important; }
+:root[data-theme="light"] .water-page :is(.water-log-list article strong, .water-reminder-toggle strong, .water-progress-ring strong) { color: #193f2c !important; }
+:root[data-theme="light"] .water-page :is(.water-log-list article small, .water-reminder-toggle small, .water-progress-copy p, .water-empty, .water-chart small, .water-chart b, .water-goal-legend) { color: #667f70 !important; }
+:root[data-theme="light"] .water-page .water-progress-ring > div { background: #fff !important; }
+:root[data-theme="light"] .water-page .water-hero { color: #fff !important; background: radial-gradient(circle at 86% 20%, rgba(111,192,255,.34), transparent 32%), linear-gradient(130deg, #0b4260, #126b83) !important; }
+
+/* Goals, food, notifications and health */
+:root[data-theme="light"] :is(.goals-page, .food-db-page, .notifications-page, .health-page) :is(.goal-card, .goal-summary, .goal-motivation, .goal-note, .food-db-card, .food-details, .notification-control-card, .notification-preference, .notification-feed, .health-connection-card, .health-permissions-card, .health-security-card, .health-limitations) { color: #193f2c !important; background: #fff !important; border-color: #d0e2d7 !important; }
+:root[data-theme="light"] :is(.goals-page, .food-db-page, .notifications-page, .health-page) :is(.goal-form, .goal-select-field, .food-db-toolbar, .food-db-search, .notification-global-controls, .notification-save-bar, .health-permission-list article, .health-connection-meta > span) { color: #254c38 !important; background: #f7fcf9 !important; border-color: #d0e2d7 !important; }
+:root[data-theme="light"] :is(.goals-page, .food-db-page, .notifications-page, .health-page) :is(p, small) { color: #627a6b; }
+:root[data-theme="light"] :is(.goals-page, .food-db-page, .notifications-page, .health-page) :is(h1, h2, h3, strong) { color: #193f2c; }
+
+/* Community */
+:root[data-theme="light"] .community-page :is(.community-post, .community-composer, .community-ranking-card, .community-challenge-card, .community-club-card, .community-summary-card, .community-profile-post, .community-profile-editor, .community-comment-form, .community-comments) { color: #183d2a !important; background: #fff !important; border-color: #d0e3d7 !important; }
+:root[data-theme="light"] .community-page :is(.community-search-field, .community-category-select, .community-activity-select, .community-field input, .community-field textarea, .community-comment-form textarea, .community-tabs button, .community-ranking-filters button) { color: #244b37 !important; background: #f8fcf9 !important; border-color: #d0e3d7 !important; }
+:root[data-theme="light"] .community-page :is(.community-post__body, .community-post__author small, .community-profile-bio, .community-comment-form small, .community-empty-feed p, .community-state p) { color: #627a6b !important; }
+:root[data-theme="light"] .community-page :is(.community-post__author strong, .community-profile-identity h1, .community-club-card h3, .community-challenge-card h3) { color: #193f2c !important; }
+
+/* Administration and account areas */
+:root[data-theme="light"] .admin-page :is(.admin-panel, .admin-stat, .admin-billing, .admin-billing__plans article, .admin-coupons, .coupon-metric, .coupon-create, .coupon-catalog, .admin-coupon-list article, .admin-reports, .admin-report-modal) { color: #193f2c !important; background: #fff !important; border-color: #d0e3d7 !important; }
+:root[data-theme="light"] .admin-page :is(.admin-table button, .admin-form input, .admin-form textarea, .admin-form select, .admin-billing input, .admin-billing select, .coupon-period, .admin-coupon-form input, .admin-coupon-form select) { color: #234935 !important; background: #f8fcf9 !important; border-color: #cbded3 !important; }
+:root[data-theme="light"] .admin-page :is(.admin-panel p, .admin-stat small, .admin-table th, .admin-billing__heading p, .admin-subscription-list small) { color: #637b6d !important; }
+
+/* Dialogs and loading surfaces used across the product. */
+:root[data-theme="light"] :is(.chat-permission-dialog, .privacy-modal, .community-composer, .community-report-modal, .admin-report-modal, .pdf-dialog) { color: #193f2c !important; border-color: #c8ddd0 !important; background: #fff !important; }
+:root[data-theme="light"] :is(.chat-permission-dialog, .privacy-modal, .community-composer, .community-report-modal, .admin-report-modal, .pdf-dialog) :is(p, small, label) { color: #61796a !important; }
+:root[data-theme="light"] :is(.chat-permission-dialog, .privacy-modal, .community-composer, .community-report-modal, .admin-report-modal, .pdf-dialog) :is(h1, h2, h3, strong) { color: #193f2c !important; }
+
+@media (max-width: 720px) {
+  :root[data-theme="light"] .vita-route-stage :is(.body-page, .water-page, .goals-page, .food-db-page, .notifications-page, .health-page, .community-page, .admin-page) { color: #193f2c; }
+}
