@@ -982,6 +982,17 @@ textarea:focus-visible {
 :root[data-theme] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__button { color: #fff !important; background: #087a4d !important; }
 :root[data-theme] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__footer { border-color: rgba(20,133,87,.17) !important; }
 
+:root[data-theme="dark"] .vita-route-stage .profile-plan-card:has(.profile-plan-card__loaded.is-free) {
+  border-color: #286446 !important;
+  background: radial-gradient(circle at 85% 12%, rgba(59,207,139,.14), transparent 28%), linear-gradient(135deg, #15271d, #0e1912) !important;
+}
+:root[data-theme="dark"] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free :is(h2, p, .profile-plan-card__footer) { color: #e4f2e8 !important; }
+:root[data-theme="dark"] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__top,
+:root[data-theme="dark"] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__footer span { color: #71e6a5 !important; }
+:root[data-theme="dark"] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__symbol { color: #ffc871 !important; background: rgba(255,200,113,.1) !important; }
+:root[data-theme="dark"] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__button { color: #052619 !important; background: #72e8a7 !important; }
+:root[data-theme="dark"] .vita-route-stage .profile-plan-card .profile-plan-card__loaded.is-free .profile-plan-card__footer { border-color: rgba(113,230,165,.16) !important; }
+
 /* Home reference composition: a calm, single-column daily dashboard. */
 .daily-hero-portrait{background:radial-gradient(circle at 45% 32%,#f4fff8,#d8f5e3 64%,#bee6cf)!important}.daily-hero-portrait>svg{opacity:.7!important}.daily-focus-card__art{background:radial-gradient(ellipse at 55% 65%,rgba(33,219,125,.34),transparent 62%),repeating-radial-gradient(circle at 60% 50%,rgba(146,255,194,.09) 0 2px,transparent 3px 15px)!important}
 
