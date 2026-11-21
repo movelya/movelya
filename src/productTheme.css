@@ -4324,3 +4324,96 @@ textarea:focus-visible {
   :root[data-theme="dark"] .vita-bottom-nav button.is-active .bottom-icon,
   :root[data-theme="dark"] .vita-bottom-nav button[data-route="assistente"].is-active .bottom-icon { color: #9dffca !important; background: rgba(105,242,168,.15) !important; }
 }
+
+/* Assistant workspace — a layered liquid-glass conversation surface. */
+.fitness-chat-page {
+  position: relative;
+  isolation: isolate;
+  border-color: rgba(255,255,255,.54) !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 78% 0%, rgba(111,255,194,.20), transparent 31%),
+    radial-gradient(circle at 12% 100%, rgba(104,185,255,.13), transparent 31%),
+    linear-gradient(135deg, rgba(249,255,251,.72), rgba(222,243,232,.48)) !important;
+  box-shadow: 0 28px 70px rgba(10,64,38,.16), inset 0 1px rgba(255,255,255,.9) !important;
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+}
+.fitness-chat-page::before { content: ''; position: absolute; z-index: -1; inset: 1px; border-radius: 27px; pointer-events: none; background: linear-gradient(115deg, rgba(255,255,255,.44), transparent 30%); }
+.chat-history-panel {
+  border-color: rgba(47,115,75,.12) !important;
+  background: linear-gradient(160deg, rgba(255,255,255,.56), rgba(231,247,237,.32)) !important;
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+}
+.chat-history__top { min-height: 86px !important; padding: 19px !important; border-color: rgba(47,115,75,.12) !important; }
+.chat-history__top strong { font-size: 15px !important; letter-spacing: -.45px; }
+.chat-history__top em { font-size: 8px !important; }
+.chat-new-button { min-height: 36px !important; padding: 0 12px !important; border: 1px solid rgba(255,255,255,.58) !important; border-radius: 12px !important; background: linear-gradient(145deg, #189568, #08704c) !important; box-shadow: 0 8px 18px rgba(9,126,81,.22), inset 0 1px rgba(255,255,255,.25) !important; }
+.chat-history-close--inline { width: 36px !important; height: 36px !important; border-radius: 12px !important; background: rgba(255,255,255,.5) !important; }
+.chat-conversation-list { padding: 12px !important; }
+.chat-conversation-list button { min-height: 62px !important; margin-bottom: 6px; padding: 12px !important; border-color: rgba(74,133,96,.10) !important; border-radius: 16px !important; background: rgba(255,255,255,.27) !important; transition: transform .26s ease, background .26s ease, box-shadow .26s ease !important; }
+.chat-conversation-list button:hover { transform: translateX(2px); background: rgba(255,255,255,.55) !important; }
+.chat-conversation-list button.is-active { border-color: rgba(39,178,111,.23) !important; background: linear-gradient(135deg, rgba(239,255,246,.78), rgba(192,244,216,.48)) !important; box-shadow: 0 8px 20px rgba(26,103,63,.10) !important; }
+.chat-conversation-list button strong { font-size: 10px !important; }
+.chat-history__privacy { margin: 12px !important; padding: 13px !important; border: 1px solid rgba(74,198,139,.20) !important; border-radius: 16px !important; background: linear-gradient(135deg, rgba(220,255,237,.72), rgba(186,239,210,.40)) !important; }
+
+.chat-main,
+.chat-messages { background: transparent !important; }
+.chat-main::before { content: ''; position: absolute; z-index: -1; top: 0; right: 0; width: 46%; height: 48%; pointer-events: none; background: radial-gradient(circle at 78% 4%, rgba(91,239,166,.20), transparent 68%); filter: blur(10px); }
+.chat-header { min-height: 86px; padding: 0 22px !important; border-color: rgba(47,115,75,.12) !important; background: linear-gradient(100deg, rgba(255,255,255,.52), rgba(239,253,245,.30)) !important; box-shadow: inset 0 1px rgba(255,255,255,.72); backdrop-filter: blur(24px) saturate(160%) !important; -webkit-backdrop-filter: blur(24px) saturate(160%); }
+.chat-ai-avatar { flex-basis: 43px !important; height: 43px !important; border: 1px solid rgba(255,255,255,.64); border-radius: 15px !important; background: linear-gradient(145deg, #2ce69e, #07865a) !important; box-shadow: 0 10px 24px rgba(20,165,103,.26), inset 0 1px rgba(255,255,255,.48) !important; }
+.chat-ai-avatar i { border-color: #eafff3 !important; }
+.chat-header > div strong { font-size: 12px !important; letter-spacing: -.22px; }
+.chat-header > div small { font-size: 8px !important; }
+.chat-header > button { min-height: 38px !important; border-color: rgba(62,122,84,.16) !important; border-radius: 12px !important; background: rgba(255,255,255,.48) !important; box-shadow: inset 0 1px rgba(255,255,255,.7) !important; }
+.chat-header .chat-icon-action { width: 38px !important; }
+.chat-messages { padding: 30px max(28px,6vw) !important; }
+.chat-welcome { min-height: auto !important; margin: auto; padding: 34px !important; border-color: rgba(255,255,255,.58) !important; border-radius: 26px !important; background: linear-gradient(145deg, rgba(255,255,255,.62), rgba(230,247,237,.43)) !important; box-shadow: 0 20px 45px rgba(27,92,56,.12), inset 0 1px rgba(255,255,255,.86) !important; backdrop-filter: blur(22px) saturate(150%); }
+.chat-welcome > span { width: 62px !important; height: 62px !important; border: 1px solid rgba(255,255,255,.62); border-radius: 21px !important; background: linear-gradient(145deg, rgba(222,255,238,.9), rgba(152,235,194,.6)) !important; box-shadow: 0 12px 28px rgba(26,155,96,.16), inset 0 1px rgba(255,255,255,.7) !important; }
+.chat-welcome h1 { font-size: 28px !important; }
+.chat-welcome__quick-prompts > button { border-color: rgba(255,255,255,.62) !important; border-radius: 16px !important; background: rgba(255,255,255,.42) !important; box-shadow: inset 0 1px rgba(255,255,255,.65) !important; transition: transform .25s ease, background .25s ease, box-shadow .25s ease !important; }
+.chat-welcome__quick-prompts > button:hover { background: rgba(244,255,249,.80) !important; box-shadow: 0 10px 22px rgba(22,101,61,.12), inset 0 1px rgba(255,255,255,.9) !important; transform: translateY(-3px) !important; }
+.chat-welcome__quick-prompts > button > span { border: 1px solid rgba(255,255,255,.58); background: rgba(188,246,215,.47) !important; }
+.chat-welcome__suggestions > button { border-color: rgba(69,130,93,.15) !important; border-radius: 11px !important; background: rgba(255,255,255,.38) !important; }
+.chat-welcome aside { border: 1px solid rgba(72,193,133,.18) !important; border-radius: 15px !important; background: linear-gradient(120deg, rgba(222,255,238,.70), rgba(191,238,214,.34)) !important; }
+
+.chat-bubble-row { max-width:860px !important; margin-bottom: 21px !important; }
+.chat-message-avatar { flex-basis: 34px !important; height: 34px !important; border: 1px solid rgba(255,255,255,.62); border-radius: 12px !important; background: linear-gradient(145deg, #2ce69e, #07865a) !important; box-shadow: 0 7px 17px rgba(18,139,83,.20) !important; }
+.chat-bubble-row.is-assistant .chat-bubble { border-color: rgba(255,255,255,.58) !important; border-radius: 7px 20px 20px 20px !important; background: linear-gradient(145deg, rgba(255,255,255,.64), rgba(231,247,238,.46)) !important; box-shadow: 0 12px 28px rgba(22,83,51,.08), inset 0 1px rgba(255,255,255,.76) !important; backdrop-filter: blur(16px); }
+.chat-bubble-row.is-user .chat-bubble { border: 1px solid rgba(255,255,255,.38) !important; border-radius: 20px 7px 20px 20px !important; background: linear-gradient(145deg, #23b87d, #08764f) !important; box-shadow: 0 12px 25px rgba(8,129,79,.20), inset 0 1px rgba(255,255,255,.28) !important; }
+.chat-action-card { border-color: rgba(255,255,255,.58) !important; border-radius: 18px !important; background: rgba(248,255,251,.58) !important; box-shadow: 0 13px 28px rgba(22,83,51,.09), inset 0 1px rgba(255,255,255,.72) !important; backdrop-filter: blur(18px); }
+.chat-composer { padding: 12px 20px 17px !important; border-color: rgba(47,115,75,.12) !important; background: linear-gradient(180deg, rgba(240,253,246,.18), rgba(234,248,240,.55)) !important; backdrop-filter: blur(22px); }
+.chat-composer > div:last-child { border-color: rgba(255,255,255,.70) !important; border-radius: 18px !important; background: rgba(255,255,255,.58) !important; box-shadow: 0 8px 18px rgba(29,93,58,.09), inset 0 1px rgba(255,255,255,.84) !important; }
+.chat-composer > div button { border: 1px solid rgba(255,255,255,.52) !important; border-radius: 13px !important; background: linear-gradient(145deg, #2bdc98, #07885a) !important; box-shadow: 0 7px 16px rgba(13,139,84,.22), inset 0 1px rgba(255,255,255,.36) !important; }
+
+:root[data-theme="dark"] .fitness-chat-page { border-color: rgba(220,255,234,.16) !important; background: radial-gradient(circle at 78% 0%, rgba(48,209,132,.14), transparent 31%), linear-gradient(135deg, rgba(22,39,30,.76), rgba(7,17,12,.68)) !important; box-shadow: 0 28px 70px rgba(0,0,0,.38), inset 0 1px rgba(242,255,246,.10) !important; }
+:root[data-theme="dark"] .chat-history-panel { background: linear-gradient(160deg, rgba(29,48,37,.70), rgba(8,21,14,.58)) !important; border-color: rgba(221,255,234,.10) !important; }
+:root[data-theme="dark"] .chat-header { background: linear-gradient(100deg, rgba(25,44,33,.67), rgba(8,21,14,.42)) !important; border-color: rgba(221,255,234,.10) !important; box-shadow: inset 0 1px rgba(241,255,246,.10); }
+:root[data-theme="dark"] .chat-header > button, :root[data-theme="dark"] .chat-history-close--inline { border-color: rgba(224,255,237,.14) !important; background: rgba(228,255,239,.07) !important; }
+:root[data-theme="dark"] .chat-conversation-list button { border-color: rgba(224,255,237,.07) !important; background: rgba(228,255,239,.035) !important; }
+:root[data-theme="dark"] .chat-conversation-list button.is-active { border-color: rgba(112,246,177,.20) !important; background: linear-gradient(135deg, rgba(70,202,126,.17), rgba(23,93,57,.22)) !important; }
+:root[data-theme="dark"] .chat-welcome, :root[data-theme="dark"] .chat-bubble-row.is-assistant .chat-bubble, :root[data-theme="dark"] .chat-action-card { border-color: rgba(224,255,237,.14) !important; background: linear-gradient(145deg, rgba(32,55,42,.68), rgba(10,27,18,.54)) !important; box-shadow: 0 16px 34px rgba(0,0,0,.22), inset 0 1px rgba(241,255,246,.10) !important; }
+:root[data-theme="dark"] .chat-welcome__quick-prompts > button, :root[data-theme="dark"] .chat-welcome__suggestions > button, :root[data-theme="dark"] .chat-composer > div:last-child { border-color: rgba(224,255,237,.13) !important; background: rgba(227,255,239,.07) !important; }
+:root[data-theme="dark"] .chat-composer { border-color: rgba(221,255,234,.10) !important; background: linear-gradient(180deg, rgba(17,36,26,.28), rgba(7,18,12,.70)) !important; }
+
+@media (max-width: 1100px) {
+  .fitness-chat-page { border-radius: 24px !important; }
+  .chat-history-scrim { z-index: 39 !important; background: rgba(3,17,10,.38) !important; backdrop-filter: blur(9px) saturate(120%) !important; }
+  .chat-history-panel { z-index: 40 !important; width: min(370px, 88vw) !important; border-right: 1px solid rgba(255,255,255,.34) !important; box-shadow: 24px 0 68px rgba(6,39,22,.20) !important; }
+  .chat-history-panel.is-open { transform: translate3d(0,0,0) !important; }
+  .chat-history-close--inline { display: grid !important; flex: 0 0 36px; }
+}
+@media (max-width: 720px) {
+  .fitness-chat-page { height: calc(100dvh - var(--vita-header) - 110px) !important; margin-inline: 0 !important; border-radius: 21px !important; }
+  .chat-header { min-height: 68px; padding: 0 12px !important; }
+  .chat-header > button:not(.chat-mobile-back) span { display: none; }
+  .chat-header .chat-icon-action { width: 34px !important; min-height: 34px !important; }
+  .chat-mobile-back { min-height: 36px !important; border-radius: 12px !important; }
+  .chat-messages { padding: 16px 11px 22px !important; }
+  .chat-welcome { padding: 21px 16px !important; border-radius: 21px !important; }
+  .chat-welcome h1 { font-size: 23px !important; }
+  .chat-welcome__quick-prompts > button { min-height: 64px !important; }
+  .chat-conversation-list button { min-height: 60px !important; }
+  .chat-composer { padding: 9px 10px calc(10px + env(safe-area-inset-bottom)) !important; }
+}
