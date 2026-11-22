@@ -3969,6 +3969,8 @@ textarea:focus-visible {
 .onboarding-steps__intro p,
 .onboarding-progress-mobile > div:first-child { color: var(--product-muted) !important; }
 .onboarding-fields { border-radius: 24px !important; background: var(--product-surface) !important; box-shadow: var(--product-card-shadow) !important; }
+.onboarding-section-divider { color: var(--product-muted) !important; }
+.onboarding-section-divider::before, .onboarding-section-divider::after { background: var(--product-border) !important; }
 .onboarding-step-icon { border-color: color-mix(in srgb, var(--product-primary) 28%, var(--product-line)) !important; border-radius: 15px !important; color: var(--product-primary) !important; background: var(--product-primary-soft) !important; }
 .onboarding-steps nav::before,
 .onboarding-progress-track { background: var(--product-line) !important; }

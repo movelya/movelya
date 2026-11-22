@@ -66,3 +66,11 @@ test('water registrations are queued safely while offline', () => {
   assert.match(service, /flushOffline/)
   assert.match(read('src/services/offlineQueueService.ts'), /indexedDB/)
 })
+
+test('onboarding groups routine details and records assistant latency privately', () => {
+  const onboarding = read('src/pages/OnboardingPage.tsx')
+  const chat = read('src/pages/FitnessChatPage.tsx')
+  assert.match(onboarding, /Agenda e estrutura/)
+  assert.match(onboarding, /currentStep === 3.*LocationStep/)
+  assert.match(chat, /observabilityService\.reportPerformance\('Resposta da IA'/)
+})

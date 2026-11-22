@@ -987,6 +987,8 @@ body { background: radial-gradient(circle at 90% -10%, rgba(19, 87, 116, .16), t
 .weekday-picker button { aspect-ratio: 1; max-height: 48px; border: 1px solid var(--vita-border); border-radius: 10px; color: #718078; background: #0c110e; font-size: 9px; cursor: pointer; }
 .weekday-picker button.is-selected { color: #052719; border-color: var(--vita-green); background: var(--vita-green); font-weight: 800; }
 .onboarding-stack { display: flex; flex-direction: column; gap: 24px; }
+.onboarding-section-divider { display: flex; align-items: center; gap: 12px; margin: 28px 0 24px; color: #8b998f; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.onboarding-section-divider::before, .onboarding-section-divider::after { content: ''; height: 1px; flex: 1; background: #2a352e; }
 .selection-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .selection-grid button { display: flex; align-items: center; justify-content: center; gap: 7px; }
 .chip-picker { display: flex; flex-wrap: wrap; gap: 7px; }

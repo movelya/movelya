@@ -29,8 +29,7 @@ const steps = [
   { title: 'Informações básicas', short: 'Você', icon: UserRound },
   { title: 'Seu objetivo', short: 'Objetivo', icon: Sparkles },
   { title: 'Experiência', short: 'Nível', icon: Dumbbell },
-  { title: 'Disponibilidade', short: 'Agenda', icon: HeartPulse },
-  { title: 'Local e equipamentos', short: 'Estrutura', icon: MapPin },
+  { title: 'Agenda e estrutura', short: 'Rotina', icon: HeartPulse },
   { title: 'Alimentação', short: 'Dieta', icon: Salad },
   { title: 'Segurança', short: 'Saúde', icon: ShieldAlert },
 ] as const
@@ -118,10 +117,9 @@ export function OnboardingPage({ userId, initialName, onComplete }: { userId: st
               {currentStep === 0 && <BasicStep data={data} update={update} />}
               {currentStep === 1 && <ChoiceCards value={data.goal} onChange={(value) => update('goal', value)} options={goalOptions} />}
               {currentStep === 2 && <ChoiceCards value={data.experienceLevel} onChange={(value) => update('experienceLevel', value)} options={experienceOptions} />}
-              {currentStep === 3 && <AvailabilityStep data={data} update={update} toggle={(value) => toggleList('availableDays', value)} />}
-              {currentStep === 4 && <LocationStep data={data} toggleList={toggleList} />}
-              {currentStep === 5 && <NutritionStep data={data} update={update} toggleList={toggleList} />}
-              {currentStep === 6 && <SafetyStep data={data} update={update} />}
+              {currentStep === 3 && <><AvailabilityStep data={data} update={update} toggle={(value) => toggleList('availableDays', value)} /><div className="onboarding-section-divider"><span>Onde e com o que você vai treinar</span></div><LocationStep data={data} toggleList={toggleList} /></>}
+              {currentStep === 4 && <NutritionStep data={data} update={update} toggleList={toggleList} />}
+              {currentStep === 5 && <SafetyStep data={data} update={update} />}
             </div>
 
             <footer className="onboarding-actions">
@@ -141,8 +139,7 @@ const stepDescriptions = [
   'Comece com os dados que nos ajudam a entender seu ponto de partida.',
   'Qual resultado é mais importante para você neste momento?',
   'Como você descreve sua experiência atual com exercícios?',
-  'Encaixe os treinos na sua vida, e não o contrário.',
-  'Conte onde pretende treinar e o que terá à disposição.',
+  'Conte quando, onde e com o que você quer treinar. Assim criamos uma rotina que cabe de verdade no seu dia.',
   'Essas informações ajudam a adaptar futuras sugestões de refeições.',
   'Sua segurança vem primeiro. Responda com atenção.',
 ]
@@ -234,15 +231,15 @@ function validateStep(step: number, data: OnboardingData) {
     if (!data.averageDurationMinutes) return 'Selecione a duração média disponível.'
     if (!data.preferredTime) return 'Selecione seu horário preferido.'
     if (data.availableDays.length < Number(data.trainingDaysPerWeek)) return 'Selecione ao menos a quantidade de dias que pretende treinar.'
+    if (!data.trainingLocations.length) return 'Selecione pelo menos um local de treino.'
+    if (!data.equipment.length) return 'Selecione os equipamentos disponíveis ou “Nenhum”.'
   }
-  if (step === 4 && !data.trainingLocations.length) return 'Selecione pelo menos um local de treino.'
-  if (step === 4 && !data.equipment.length) return 'Selecione os equipamentos disponíveis ou “Nenhum”.'
-  if (step === 5) {
+  if (step === 4) {
     if (!data.mealsPerDay) return 'Informe a quantidade de refeições.'
     if (!data.dietaryPreferences.length) return 'Selecione uma preferência alimentar.'
     if (!data.dietaryRestrictions.length) return 'Selecione uma restrição ou “Nenhuma”.'
   }
-  if (step === 6) {
+  if (step === 5) {
     const details = [data.injuries, data.pain, data.physicalLimitations, data.healthConditions, data.medication]
     if (details.some((answer) => answer.value && answer.details.trim().length < 3)) return 'Descreva os itens de saúde marcados como “Sim”.'
     if (!data.pregnancyStatus) return 'Selecione uma opção sobre gravidez.'
