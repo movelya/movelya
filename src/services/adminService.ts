@@ -10,6 +10,7 @@ export interface AdminCouponSummary { active_coupons: number; redemptions_total:
 export interface AdminCoupon { code: string; description: string; discount_type: 'percent' | 'fixed_cents'; discount_value: number; applies_to: Array<'PRO' | 'PRO_PLUS'>; first_purchase_only: boolean; max_redemptions: number | null; redemptions_count: number; active: boolean; archived_at: string | null; expires_at: string | null; discount_total_cents: number; net_revenue_cents: number; created_at: string }
 export interface AdminAuditEvent { created_at:string; action:string; actor_name:string|null; target_user_id:string|null; metadata:Record<string,unknown> }
 export interface AdminInternalAlert { id:string; category:string; severity:'info'|'warning'|'critical'; title:string; details:Record<string,unknown>; status:string; created_at:string }
+export interface AdminDiagnosticSummary { kind:'error'|'unhandled_rejection'|'performance'; occurrences:number; latest_at:string; sample_message:string }
 export interface AdminCancellationReason { plan_code:'PRO'|'PRO_PLUS'; reason:string; cancellations:number; percentage:number }
 export type AdminCommunityReportStatus = 'open' | 'reviewing' | 'resolved' | 'dismissed'
 export interface AdminCommunityReport { id:string; target_type:'post'|'comment'|'user'; reason:'spam'|'harassment'|'inappropriate_content'|'off_topic'|'other'; details:string|null; status:AdminCommunityReportStatus; created_at:string; reviewed_at:string|null; reporter_name:string|null; target_name:string|null }
@@ -57,6 +58,7 @@ export const adminService = {
   async setCouponStatus(code: string, action: 'activate' | 'pause' | 'archive') { const { error } = await requireClient().rpc('admin_set_coupon_status', { input_code: code, input_action: action }); if (error) throw error },
   async auditHistory(days=30, action='') { const {data,error}=await requireClient().rpc('admin_list_audit_history',{input_days:days,input_action:action||null}); if(error)throw error; return (data??[]) as AdminAuditEvent[] },
   async internalAlerts() { const {data,error}=await requireClient().rpc('admin_list_internal_alerts'); if(error)throw error; return (data??[]) as AdminInternalAlert[] },
+  async diagnostics(hours=24) { const {data,error}=await requireClient().rpc('admin_client_diagnostics_summary',{input_hours:hours}); if(error)throw error; return (data??[]) as AdminDiagnosticSummary[] },
   async cancellationReasons(days=90) { const {data,error}=await requireClient().rpc('admin_cancellation_reason_report',{input_days:days}); if(error)throw error; return (data??[]) as AdminCancellationReason[] },
   async communityReports(status: AdminCommunityReportStatus | 'all' = 'open') { const {data,error}=await requireClient().rpc('admin_list_community_reports',{input_status:status==='all'?null:status}); if(error)throw error; return (data??[]) as AdminCommunityReport[] },
   async updateCommunityReportStatus(reportId:string,status:Exclude<AdminCommunityReportStatus,'open'>) { const {error}=await requireClient().rpc('admin_update_community_report_status',{input_report_id:reportId,input_status:status}); if(error)throw error },

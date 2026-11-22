@@ -1,4 +1,5 @@
 import { supabase } from '../integrations/supabase'
+import { offlineQueueService } from './offlineQueueService'
 
 export interface WaterLog { id: string; amountMl: number; occurredAt: string }
 export interface WaterDay { date: string; totalMl: number }
@@ -18,7 +19,7 @@ export const waterService = {
       supabase.from('water_settings').select('daily_goal_ml,reminders_enabled,reminder_times').eq('user_id', userId).maybeSingle(),
       supabase.from('daily_stats').select('water_goal').eq('user_id', userId).eq('date', localDate()).maybeSingle(),
     ])
-    if (logsResult.error || settingsResult.error || statsResult.error) throw new Error('Não foi possível carregar seu controle de água.')
+    if (logsResult.error || settingsResult.error || statsResult.error) return localData()
     const allLogs = (logsResult.data ?? []).map(mapLog)
     const settings: WaterSettings = settingsResult.data ? { dailyGoalMl: Number(settingsResult.data.daily_goal_ml), remindersEnabled: Boolean(settingsResult.data.reminders_enabled), reminderTimes: (settingsResult.data.reminder_times ?? []).map((time: string) => time.slice(0, 5)) } : { dailyGoalMl: Math.round(Number(statsResult.data?.water_goal ?? 2.5) * 1000), remindersEnabled: false, reminderTimes: ['09:00', '12:00', '15:00', '18:00'] }
     return { logs: allLogs.filter((log) => localDate(new Date(log.occurredAt)) === localDate()), settings, week: buildWeek(allLogs) }
@@ -27,9 +28,28 @@ export const waterService = {
   async add(userId: string, amountMl: number, occurredAt = new Date().toISOString()) {
     validateAmount(amountMl)
     if (!supabase) { localLogs = [{ id: `water-${Date.now()}`, amountMl, occurredAt }, ...localLogs]; return }
+    if (!navigator.onLine) return queueWater(userId, amountMl, occurredAt)
     const { error } = await supabase.from('water_intake_logs').insert({ user_id: userId, amount_ml: amountMl, occurred_at: occurredAt })
-    if (error) throw new Error('Não foi possível registrar a água.')
+    if (error) {
+      if (isConnectionError(error)) return queueWater(userId, amountMl, occurredAt)
+      throw new Error('Não foi possível registrar a água.')
+    }
     await syncDay(userId, localDate(new Date(occurredAt)))
+  },
+
+  async flushOffline(userId: string) {
+    if (!supabase || !navigator.onLine) return 0
+    const pending = await offlineQueueService.waterFor(userId)
+    let synced = 0
+    for (const item of pending) {
+      const { error } = await supabase.from('water_intake_logs').insert({ user_id: userId, amount_ml: item.amountMl, occurred_at: item.occurredAt })
+      if (error) { if (isConnectionError(error)) break; continue }
+      await offlineQueueService.remove(item.id)
+      await syncDay(userId, localDate(new Date(item.occurredAt)))
+      synced++
+    }
+    if (synced) localLogs = localLogs.filter((item) => !item.id.startsWith('offline-water-'))
+    return synced
   },
 
   async update(userId: string, log: WaterLog, amountMl: number, occurredAt: string) {
@@ -58,6 +78,13 @@ export const waterService = {
     if (statsError) throw new Error('Preferências salvas, mas não foi possível atualizar a meta do painel.')
   },
 }
+
+async function queueWater(userId: string, amountMl: number, occurredAt: string) {
+  const pending = await offlineQueueService.addWater(userId, amountMl, occurredAt)
+  localLogs = [{ id: `offline-water-${pending.id}`, amountMl, occurredAt }, ...localLogs]
+  return { queued: true }
+}
+function isConnectionError(error: { message?: string }) { return /network|fetch|offline|failed to fetch/i.test(String(error.message || '')) }
 
 async function syncDay(userId: string, date: string) {
   if (!supabase) return

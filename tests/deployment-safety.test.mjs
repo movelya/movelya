@@ -50,3 +50,19 @@ test('light theme audit protects legacy feature styles and keyboard focus', () =
   assert.match(audit, /\.water-page/)
   assert.match(audit, /\.community-page/)
 })
+
+test('operational diagnostics are privacy-scoped', () => {
+  const migration = read('supabase/migrations/20261121120000_client_diagnostics.sql')
+  const service = read('src/services/observabilityService.ts')
+  assert.match(migration, /enable row level security/)
+  assert.match(migration, /user_id = auth\.uid\(\)/)
+  assert.match(service, /redigido/)
+  assert.match(service, /charAt|slice\(0, 420\)/)
+})
+
+test('water registrations are queued safely while offline', () => {
+  const service = read('src/services/waterService.ts')
+  assert.match(service, /offlineQueueService\.addWater/)
+  assert.match(service, /flushOffline/)
+  assert.match(read('src/services/offlineQueueService.ts'), /indexedDB/)
+})

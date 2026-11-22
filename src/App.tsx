@@ -13,6 +13,8 @@ import { useVitaRoute } from './hooks/useVitaRoute'
 import { isPrivateRoute } from './utils/navigation'
 import { notificationService } from './services/notificationService'
 import { subscriptionService } from './services/subscriptionService'
+import { observabilityService } from './services/observabilityService'
+import { waterService } from './services/waterService'
 import './pwa/registerServiceWorker'
 import './productTheme.css'
 
@@ -53,6 +55,17 @@ export default function App() {
   const [showQuotaUpgrade, setShowQuotaUpgrade] = useState(false)
   const routeStageRef = useRef<HTMLDivElement>(null)
   const planWelcomeCheckRef = useRef<string | null>(null)
+  const userId = user?.id
+
+  useEffect(() => { observabilityService.start() }, [])
+  useEffect(() => { observabilityService.identify(userId) }, [userId])
+  useEffect(() => {
+    if (!userId) return
+    const sync = () => { void waterService.flushOffline(userId) }
+    sync()
+    window.addEventListener('online', sync)
+    return () => window.removeEventListener('online', sync)
+  }, [userId])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
