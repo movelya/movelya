@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowRight, Ban, Dumbbell, Ellipsis, Flag, Flame, Footprints, Heart, LoaderCircle, Medal, MessageCircle, Pencil, Salad, Search, Send, Trash2, Trophy, UserRound, UsersRound, X } from 'lucide-react'
+import { ArrowRight, Ban, Camera, Dumbbell, Ellipsis, Flag, Flame, Footprints, Heart, ImagePlus, LoaderCircle, Medal, MessageCircle, Pencil, Salad, Search, Send, Trash2, Trophy, UserRound, UsersRound, X } from 'lucide-react'
 import { communityService, type CommunityComment, type CommunityData, type CommunityFeedPage, type CommunityPost, type CommunityPostType, type CommunityProfileSearchResult, type CommunityRankingCategory, type CommunityRankingData, type CommunityRankingScope, type CommunityReportReason } from '../services/communityService'
 import { CreateCommunityPostModal } from '../components/CreateCommunityPostModal'
 import { CommunityClubsPanel } from '../components/CommunityClubsPanel'
@@ -102,7 +102,7 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
 
   return <section className="community-page">
     <header className="community-heading">
-      <div><span className="page-eyebrow">EM MOVIMENTO</span><h1>Comunidade</h1><p>Troque inspiração por consistência, no seu ritmo.</p></div>
+      <div><span className="page-eyebrow">MOVELYA EM MOVIMENTO</span><h1>Comunidade</h1><p>Compartilhe seus treinos, conquistas<br />e inspire outras pessoas.</p><i className="community-heading__accent" /></div>
       <div className="community-heading-actions"><button className="community-my-profile" onClick={() => onNavigate(`/perfil-social?user=${encodeURIComponent(userId)}`)}><UserRound size={16} /><span>Meu perfil</span></button><button className={`community-search ${searchOpen ? 'is-open' : ''}`} onClick={() => setSearchOpen((value) => !value)} aria-label={searchOpen ? 'Fechar pesquisa' : 'Pesquisar na comunidade'}>{searchOpen ? <X size={18} /> : <Search size={18} />}<span>Pesquisar</span></button></div>
     </header>
 
@@ -111,12 +111,7 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
 
     {!data ? <CommunityLoading /> : <>
       {tab === 'feed' && <>
-        <section className="community-summary" aria-label="Seu resumo na comunidade">
-          <SummaryCard icon={Flame} label="Sua sequência" value={data.summary.streak ? `${data.summary.streak} ${data.summary.streak === 1 ? 'dia' : 'dias'}` : 'Comece hoje'} tone="orange" />
-          <SummaryCard icon={Medal} label="Maior sequência" value={`${data.summary.bestStreak} ${data.summary.bestStreak === 1 ? 'dia' : 'dias'}`} tone="orange" />
-          <SummaryCard icon={Trophy} label="Sua posição" value={data.summary.position ? `#${data.summary.position} semanal` : 'Sem posição'} tone="green" />
-          <SummaryCard icon={Dumbbell} label="Treinos na semana" value={String(data.summary.weeklyWorkouts)} tone="blue" />
-        </section>
+        <StoryRail onOpen={setComposerType} />
         <PublishActivity onOpen={setComposerType} />
         <div className="community-content-grid">
           <div className="community-feed" aria-label="Feed da comunidade">
@@ -135,10 +130,15 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
 }
 
 function Tab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) { return <button role="tab" aria-selected={active} className={active ? 'is-active' : ''} onClick={onClick}>{label}</button> }
-function SummaryCard({ icon: Icon, label, value, tone }: { icon: typeof Flame; label: string; value: string; tone: string }) { return <article className={`community-summary-card is-${tone}`}><span><Icon size={18} /></span><div><small>{label}</small><strong>{value}</strong></div></article> }
+function StoryRail({ onOpen }: { onOpen: (type: CommunityPostType) => void }) {
+  const stories: Array<{ label: string; type: CommunityPostType; icon: typeof Dumbbell }> = [
+    { label: 'Seu treino', type: 'workout', icon: Dumbbell }, { label: 'Corrida', type: 'running', icon: Footprints }, { label: 'Receitas', type: 'food', icon: Salad }, { label: 'Lifestyle', type: 'general_fitness', icon: Flame },
+  ]
+  return <section className="community-stories" aria-label="Compartilhar atividade"><button className="community-story community-story--create" onClick={() => onOpen('general_fitness')}><span><Camera size={27} /><b>+</b></span><small>Criar story</small></button>{stories.map(({ label, type, icon: Icon }) => <button key={type} className={`community-story is-${type}`} onClick={() => onOpen(type)}><span><Icon size={25} /></span><small>{label}</small></button>)}</section>
+}
 
 function PublishActivity({ onOpen }: { onOpen: (type: CommunityPostType) => void }) {
-  return <section className="community-publish"><button className="community-publish__intro" onClick={() => onOpen('general_fitness')}><span><UsersRound size={18} /></span><div><small>COMPARTILHE SUA ATIVIDADE</small><h2>Seu movimento pode inspirar alguém.</h2></div></button><nav aria-label="Escolher atividade para compartilhar"><button onClick={() => onOpen('workout')}><Dumbbell size={16} />Treino</button><button onClick={() => onOpen('running')}><Footprints size={16} />Corrida</button><button onClick={() => onOpen('food')}><Salad size={16} />Refeição</button></nav></section>
+  return <section className="community-publish"><button className="community-publish__intro" onClick={() => onOpen('general_fitness')}><span><UsersRound size={18} /></span><div><h2>O que você está fazendo hoje?</h2></div></button><nav aria-label="Escolher atividade para compartilhar"><button aria-label="Adicionar imagem" onClick={() => onOpen('general_fitness')}><ImagePlus size={21} /></button><button className="community-publish__quick" onClick={() => onOpen('workout')}><Dumbbell size={16} />Treino</button><button className="community-publish__quick" onClick={() => onOpen('running')}><Footprints size={16} />Corrida</button></nav></section>
 }
 
 function PostCard({ post, viewerId, liking, onLike, onOpenProfile, onCommentAdded, onCommentRemoved, onPostUpdated, onPostDeleted, onBlockUser }: { post: CommunityPost; viewerId: string; liking: boolean; onLike: () => void; onOpenProfile: () => void; onCommentAdded: () => void; onCommentRemoved: () => void; onPostUpdated: (caption: string, editedAt: string) => void; onPostDeleted: () => void; onBlockUser: (blockedUserId: string) => Promise<void> }) {
