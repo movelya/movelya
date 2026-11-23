@@ -85,7 +85,7 @@ export function CreateCommunityPostModal({ userId, initialType = 'workout', onCl
         {(publishing || progressLabel) && <div className="community-upload-progress"><div><span>{progressLabel}</span><b>{progress}%</b></div><i><em style={{ width: `${progress}%` }} /></i></div>}
         {error && <div className="community-composer-error">{error}</div>}
       </div>
-      <footer><button onClick={onClose} disabled={publishing}>Cancelar</button><button className="community-publish-button" onClick={() => void publish()} disabled={!image || preparing || publishing}>{publishing ? <LoaderCircle size={16} className="is-spinning" /> : <Send size={16} />}{publishing ? 'Publicando…' : 'Publicar'}</button></footer>
+      <footer><button onClick={onClose} disabled={publishing}>Cancelar</button>{!image && <button className="community-footer-photo" onClick={() => libraryInput.current?.click()} disabled={preparing || publishing}><ImagePlus size={16} /> Adicionar foto</button>}<button className="community-publish-button" onClick={() => void publish()} disabled={!image || preparing || publishing}>{publishing ? <LoaderCircle size={16} className="is-spinning" /> : <Send size={16} />}{publishing ? 'Publicando…' : 'Publicar'}</button></footer>
     </section>
   </div>
 }

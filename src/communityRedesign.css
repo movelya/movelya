@@ -216,4 +216,5 @@
   .community-composer__body > .community-image-picker { background: var(--product-surface-soft); }
   .community-composer > footer { padding: 12px 15px calc(12px + env(safe-area-inset-bottom)) !important; background: var(--product-surface); }
   .community-composer > footer .community-publish-button { min-width: 112px; justify-content: center; }
+  .community-composer > footer .community-footer-photo { min-width: 0; flex: 1; justify-content: center; display: inline-flex; align-items: center; gap: 6px; color: var(--product-primary); border-color: color-mix(in srgb, var(--product-primary) 42%, var(--product-line)); background: var(--product-primary-soft); }
 }
