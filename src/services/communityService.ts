@@ -148,7 +148,12 @@ export interface CommunityData {
   summary: { streak: number; bestStreak: number; weeklyWorkouts: number; position: number | null }
   posts: CommunityPost[]
   ranking: CommunityRankingData
+  nextCursor: CommunityFeedCursor | null
+  hasMore: boolean
 }
+
+export interface CommunityFeedCursor { createdAt: string; id: string }
+export interface CommunityFeedPage { posts: CommunityPost[]; nextCursor: CommunityFeedCursor | null; hasMore: boolean }
 
 export interface RecentCommunityActivity {
   id: string
@@ -186,22 +191,14 @@ export const communityService = {
     if (!supabase || userId === 'development-preview') return emptyCommunityData()
 
     const weekStart = startOfWeek()
-    const [postsResult, workoutsResult, streakSummary, ranking] = await Promise.all([
-      supabase.from('posts').select('id,user_id,type,caption,created_at,edited_at,is_permanent,expires_at,post_media(storage_path),outdoor_activities(distance_km,duration_seconds)').order('created_at', { ascending: false }).limit(40),
+    const [feed, workoutsResult, streakSummary, ranking] = await Promise.all([
+      this.loadFeedPage(userId),
       supabase.from('workout_sessions').select('ended_at,started_at').eq('user_id', userId).eq('status', 'completed').gte('started_at', weekStart.toISOString()),
       activityStreakService.load(userId),
       loadCommunityRanking('global', 'streak', 10),
     ])
-    if (postsResult.error) throw postsResult.error
-
-    const posts = (postsResult.data ?? []) as unknown as RawPost[]
-    const engagementResult = posts.length ? await supabase.rpc('community_feed_engagement', { target_post_ids: posts.map((post) => post.id) }) : { data: [], error: null }
-    if (engagementResult.error) throw engagementResult.error
-    const engagement = new Map<string, EngagementRow>((engagementResult.data ?? []).map((item: any) => [item.post_id, item]))
-    const profiles = await loadProfiles([...new Set(posts.map((post) => post.user_id))])
-    const hydratedPosts = await Promise.all(posts.map((post) => hydratePost(post, profiles, engagement.get(post.id), userId)))
     return {
-      posts: hydratedPosts,
+      posts: feed.posts, nextCursor: feed.nextCursor, hasMore: feed.hasMore,
       ranking,
       summary: {
         streak: streakSummary.currentStreak,
@@ -210,6 +207,31 @@ export const communityService = {
         position: ranking.myPosition,
       },
     }
+  },
+
+  async loadFeedPage(userId: string, cursor?: CommunityFeedCursor | null, searchTerm?: string): Promise<CommunityFeedPage> {
+    if (!supabase || userId === 'development-preview') return { posts: [], nextCursor: null, hasMore: false }
+    const pageSize = searchTerm ? 30 : 20
+    const { data, error } = await supabase.rpc('community_feed_page', {
+      requested_limit: pageSize + 1, before_created_at: cursor?.createdAt ?? null, before_id: cursor?.id ?? null, search_term: searchTerm?.trim() || null,
+    })
+    if (error) throw error
+    const pageRows = (data ?? []) as unknown as RawPost[]
+    const hasMore = pageRows.length > pageSize
+    const rows = hasMore ? pageRows.slice(0, pageSize) : pageRows
+    if (!rows.length) return { posts: [], nextCursor: null, hasMore: false }
+    const ids = rows.map((post) => post.id)
+    const detailsResult = await supabase.from('posts').select('id,user_id,type,caption,created_at,edited_at,is_permanent,expires_at,post_media(storage_path),outdoor_activities(distance_km,duration_seconds)').in('id', ids)
+    if (detailsResult.error) throw detailsResult.error
+    const details = new Map<string, RawPost>((detailsResult.data ?? []).map((post: any) => [post.id, post as RawPost]))
+    const posts = rows.map((row) => details.get(row.id)).filter((post): post is RawPost => Boolean(post))
+    const engagementResult = posts.length ? await supabase.rpc('community_feed_engagement', { target_post_ids: posts.map((post) => post.id) }) : { data: [], error: null }
+    if (engagementResult.error) throw engagementResult.error
+    const engagement = new Map<string, EngagementRow>((engagementResult.data ?? []).map((item: any) => [item.post_id, item]))
+    const profiles = await loadProfiles([...new Set(posts.map((post) => post.user_id))])
+    const hydratedPosts = await Promise.all(posts.map((post) => hydratePost(post, profiles, engagement.get(post.id), userId)))
+    const tail = rows[rows.length - 1]
+    return { posts: hydratedPosts, nextCursor: hasMore && tail ? { createdAt: tail.created_at, id: tail.id } : null, hasMore }
   },
 
   async loadRanking(scope: CommunityRankingScope, category: CommunityRankingCategory): Promise<CommunityRankingData> {
@@ -654,7 +676,7 @@ async function hydratePost(post: RawPost, profiles: Map<string, { name: string; 
 }
 
 function startOfWeek() { const date = new Date(); date.setHours(0, 0, 0, 0); date.setDate(date.getDate() - ((date.getDay() + 6) % 7)); return date }
-function emptyCommunityData(): CommunityData { return { summary: { streak: 0, bestStreak: 0, weeklyWorkouts: 0, position: null }, posts: [], ranking: emptyCommunityRanking() } }
+function emptyCommunityData(): CommunityData { return { summary: { streak: 0, bestStreak: 0, weeklyWorkouts: 0, position: null }, posts: [], ranking: emptyCommunityRanking(), nextCursor: null, hasMore: false } }
 
 async function loadCommunityRanking(scope: CommunityRankingScope, category: CommunityRankingCategory, limit: number): Promise<CommunityRankingData> {
   if (!supabase) return emptyCommunityRanking(scope, category)

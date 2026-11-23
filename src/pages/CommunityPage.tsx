@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ArrowRight, Ban, Dumbbell, Ellipsis, Flag, Flame, Footprints, Heart, LoaderCircle, Medal, MessageCircle, Pencil, Salad, Search, Send, Trash2, Trophy, UserRound, UsersRound, X } from 'lucide-react'
-import { communityService, type CommunityComment, type CommunityData, type CommunityPost, type CommunityPostType, type CommunityProfileSearchResult, type CommunityRankingCategory, type CommunityRankingData, type CommunityRankingScope, type CommunityReportReason } from '../services/communityService'
+import { communityService, type CommunityComment, type CommunityData, type CommunityFeedPage, type CommunityPost, type CommunityPostType, type CommunityProfileSearchResult, type CommunityRankingCategory, type CommunityRankingData, type CommunityRankingScope, type CommunityReportReason } from '../services/communityService'
 import { CreateCommunityPostModal } from '../components/CreateCommunityPostModal'
 import { CommunityClubsPanel } from '../components/CommunityClubsPanel'
 import '../community.css'
@@ -16,6 +16,9 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState<CommunityProfileSearchResult[]>([])
   const [searchingProfiles, setSearchingProfiles] = useState(false)
+  const [searchedFeed, setSearchedFeed] = useState<CommunityFeedPage | null>(null)
+  const [searchingPosts, setSearchingPosts] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [notice, setNotice] = useState('')
   const [composerType, setComposerType] = useState<CommunityPostType | null>(null)
   const [pendingLikes, setPendingLikes] = useState<Record<string, boolean>>({})
@@ -39,10 +42,28 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
     return () => { active = false; window.clearTimeout(timer) }
   }, [query])
 
-  const visiblePosts = useMemo(() => data?.posts.filter((post) => {
-    const term = query.trim().toLocaleLowerCase('pt-BR')
-    return !term || post.caption.toLocaleLowerCase('pt-BR').includes(term) || post.profile.name.toLocaleLowerCase('pt-BR').includes(term)
-  }) ?? [], [data?.posts, query])
+  useEffect(() => {
+    const term = query.trim()
+    if (term.length < 2) { setSearchedFeed(null); setSearchingPosts(false); return }
+    let active = true
+    const timer = window.setTimeout(() => {
+      setSearchingPosts(true)
+      communityService.loadFeedPage(userId, null, term).then((result) => active && setSearchedFeed(result)).catch(() => active && setSearchedFeed({ posts: [], nextCursor: null, hasMore: false })).finally(() => active && setSearchingPosts(false))
+    }, 250)
+    return () => { active = false; window.clearTimeout(timer) }
+  }, [query, userId])
+
+  const visiblePosts = useMemo(() => query.trim().length >= 2 ? searchedFeed?.posts ?? [] : data?.posts ?? [], [data?.posts, query, searchedFeed])
+
+  async function loadMore() {
+    if (!data?.hasMore || !data.nextCursor || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const page = await communityService.loadFeedPage(userId, data.nextCursor)
+      setData((current) => current ? { ...current, posts: [...current.posts, ...page.posts], nextCursor: page.nextCursor, hasMore: page.hasMore } : current)
+    } catch { setNotice('Não foi possível carregar mais publicações agora.') }
+    finally { setLoadingMore(false) }
+  }
 
   async function toggleLike(post: CommunityPost) {
     if (pendingLikeIds.current.has(post.id)) return
@@ -100,7 +121,7 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
         <div className="community-content-grid">
           <div className="community-feed" aria-label="Feed da comunidade">
             <div className="community-section-heading"><div><small>FEED</small><h2>O que move a comunidade</h2></div>{query && <span>{visiblePosts.length} resultado{visiblePosts.length === 1 ? '' : 's'}</span>}</div>
-            {visiblePosts.length ? visiblePosts.map((post) => <PostCard key={`${post.id}:${blockRevision}`} post={post} viewerId={userId} liking={Boolean(pendingLikes[post.id])} onLike={() => void toggleLike(post)} onOpenProfile={() => onNavigate(`/perfil-social?user=${encodeURIComponent(post.userId)}`)} onCommentAdded={() => setData((current) => current ? { ...current, posts: current.posts.map((item) => item.id === post.id ? { ...item, comments: item.comments + 1 } : item) } : current)} onCommentRemoved={() => setData((current) => current ? { ...current, posts: current.posts.map((item) => item.id === post.id ? { ...item, comments: Math.max(0, item.comments - 1) } : item) } : current)} onPostUpdated={(caption, editedAt) => setData((current) => current ? { ...current, posts: current.posts.map((item) => item.id === post.id ? { ...item, caption, editedAt } : item) } : current)} onPostDeleted={() => setData((current) => current ? { ...current, posts: current.posts.filter((item) => item.id !== post.id) } : current)} onBlockUser={blockUser} />) : <FeedEmpty searched={Boolean(query)} onNavigate={onNavigate} />}
+            {searchingPosts ? <div className="community-feed-searching"><LoaderCircle size={17} className="is-spinning" /> Buscando em toda a Comunidade…</div> : visiblePosts.length ? <>{visiblePosts.map((post) => <PostCard key={`${post.id}:${blockRevision}`} post={post} viewerId={userId} liking={Boolean(pendingLikes[post.id])} onLike={() => void toggleLike(post)} onOpenProfile={() => onNavigate(`/perfil-social?user=${encodeURIComponent(post.userId)}`)} onCommentAdded={() => setData((current) => current ? { ...current, posts: current.posts.map((item) => item.id === post.id ? { ...item, comments: item.comments + 1 } : item) } : current)} onCommentRemoved={() => setData((current) => current ? { ...current, posts: current.posts.map((item) => item.id === post.id ? { ...item, comments: Math.max(0, item.comments - 1) } : item) } : current)} onPostUpdated={(caption, editedAt) => setData((current) => current ? { ...current, posts: current.posts.map((item) => item.id === post.id ? { ...item, caption, editedAt } : item) } : current)} onPostDeleted={() => setData((current) => current ? { ...current, posts: current.posts.filter((item) => item.id !== post.id) } : current)} onBlockUser={blockUser} />)}{!query.trim() && data.hasMore && <button className="community-load-more" disabled={loadingMore} onClick={() => void loadMore()}>{loadingMore ? <><LoaderCircle size={15} className="is-spinning" /> Carregando</> : 'Carregar mais publicações'}</button>}</> : <FeedEmpty searched={Boolean(query)} onNavigate={onNavigate} />}
           </div>
           <WeeklyRanking ranking={data.ranking} onMore={() => setTab('ranking')} />
         </div>
