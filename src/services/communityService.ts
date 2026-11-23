@@ -9,6 +9,7 @@ export interface CommunityPost {
   type: CommunityPostType
   caption: string
   createdAt: string
+  editedAt: string | null
   isPermanent: boolean
   expiresAt: string | null
   likedByMe: boolean
@@ -164,7 +165,7 @@ export interface CreateCommunityPostInput {
 }
 
 type RawPost = {
-  id: string; user_id: string; type: CommunityPostType; caption: string; created_at: string; is_permanent: boolean; expires_at: string | null
+  id: string; user_id: string; type: CommunityPostType; caption: string; created_at: string; edited_at?: string | null; is_permanent: boolean; expires_at: string | null
   post_media?: Array<{ storage_path: string }>
   outdoor_activities?: { distance_km: number | null; duration_seconds: number | null } | null
 }
@@ -177,7 +178,7 @@ export const communityService = {
 
     const weekStart = startOfWeek()
     const [postsResult, workoutsResult, streakSummary, ranking] = await Promise.all([
-      supabase.from('posts').select('id,user_id,type,caption,created_at,is_permanent,expires_at,post_media(storage_path),outdoor_activities(distance_km,duration_seconds)').order('created_at', { ascending: false }).limit(40),
+      supabase.from('posts').select('id,user_id,type,caption,created_at,edited_at,is_permanent,expires_at,post_media(storage_path),outdoor_activities(distance_km,duration_seconds)').order('created_at', { ascending: false }).limit(40),
       supabase.from('workout_sessions').select('ended_at,started_at').eq('user_id', userId).eq('status', 'completed').gte('started_at', weekStart.toISOString()),
       activityStreakService.load(userId),
       loadCommunityRanking('global', 'streak', 10),
@@ -319,6 +320,25 @@ export const communityService = {
     if (error) throw error
   },
 
+  async updatePost(postId: string, userId: string, caption: string) {
+    if (!supabase) throw new Error('A conexão com a Comunidade não está disponível.')
+    const normalizedCaption = caption.trim()
+    if (!normalizedCaption) throw new Error('A publicação precisa ter uma legenda.')
+    const { data, error } = await supabase.from('posts').update({ caption: normalizedCaption }).eq('id', postId).eq('user_id', userId).select('caption,edited_at').single()
+    if (error || !data) throw error ?? new Error('Não foi possível editar essa publicação.')
+    return { caption: String(data.caption), editedAt: data.edited_at ? String(data.edited_at) : new Date().toISOString() }
+  },
+
+  async deletePost(postId: string, userId: string) {
+    if (!supabase) throw new Error('A conexão com a Comunidade não está disponível.')
+    const media = await supabase.from('post_media').select('storage_path,thumbnail_path').eq('post_id', postId)
+    if (media.error) throw media.error
+    const { error } = await supabase.from('posts').delete().eq('id', postId).eq('user_id', userId)
+    if (error) throw error
+    const paths = (media.data ?? []).flatMap((item: any) => [item.storage_path, item.thumbnail_path].filter(Boolean))
+    if (paths.length) void supabase.storage.from('community-media').remove(paths)
+  },
+
   async blockUser(blockedUserId: string, userId: string) {
     if (!supabase) throw new Error('A conexão com a Comunidade não está disponível.')
     if (blockedUserId === userId) throw new Error('Você não pode bloquear seu próprio perfil.')
@@ -446,7 +466,7 @@ export const communityService = {
 
   async loadUserPosts(userId: string, viewerId: string): Promise<CommunityPost[]> {
     if (!supabase) return []
-    const { data, error } = await supabase.from('posts').select('id,user_id,type,caption,created_at,is_permanent,expires_at,post_media(storage_path),outdoor_activities(distance_km,duration_seconds)').eq('user_id', userId).order('created_at', { ascending: false }).limit(40)
+    const { data, error } = await supabase.from('posts').select('id,user_id,type,caption,created_at,edited_at,is_permanent,expires_at,post_media(storage_path),outdoor_activities(distance_km,duration_seconds)').eq('user_id', userId).order('created_at', { ascending: false }).limit(40)
     if (error) throw error
     const posts = (data ?? []) as unknown as RawPost[]
     const engagementResult = posts.length ? await supabase.rpc('community_feed_engagement', { target_post_ids: posts.map((post) => post.id) }) : { data: [], error: null }
@@ -587,7 +607,7 @@ async function hydratePost(post: RawPost, profiles: Map<string, { name: string; 
   }
   const activity = Array.isArray(post.outdoor_activities) ? post.outdoor_activities[0] : post.outdoor_activities
   return {
-    id: post.id, userId: post.user_id, type: post.type, caption: post.caption, createdAt: post.created_at, isPermanent: post.is_permanent, expiresAt: post.expires_at,
+    id: post.id, userId: post.user_id, type: post.type, caption: post.caption, createdAt: post.created_at, editedAt: post.edited_at ?? null, isPermanent: post.is_permanent, expiresAt: post.expires_at,
     likedByMe: engagement?.liked_by_me ?? false, likes: Number(engagement?.likes_count ?? 0), comments: Number(engagement?.comments_count ?? 0),
     profile: profiles.get(post.user_id) ?? { name: 'Membro MOVELYA', avatarUrl: null }, mediaUrl,
     activity: activity ? { distanceKm: Number(activity.distance_km ?? 0), durationSeconds: Number(activity.duration_seconds ?? 0) } : null,
