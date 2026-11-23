@@ -1,0 +1,159 @@
+/* Dedicated community composition. Kept separate from the legacy feature styles
+   so this visual system always wins without affecting other product screens. */
+.community-page {
+  max-width: 800px;
+  padding: 32px 0 118px;
+  color: var(--product-text);
+}
+
+.community-page .community-heading {
+  align-items: flex-start;
+  padding: 4px 8px 0;
+}
+.community-page .community-heading h1 {
+  margin: 0;
+  font-size: clamp(44px, 8vw, 68px);
+  line-height: .94;
+  letter-spacing: -3.5px;
+}
+.community-page .community-heading p { margin-top: 16px; font-size: clamp(17px, 3vw, 22px); line-height: 1.22; }
+.community-page .community-heading .page-eyebrow { margin-bottom: 17px; font-size: 9px; letter-spacing: 1.8px; }
+.community-page .community-heading__accent { margin-top: 17px; }
+.community-page .community-heading-actions { gap: 10px; }
+.community-page .community-search, .community-page .community-my-profile {
+  width: 50px;
+  min-height: 50px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--product-surface);
+  box-shadow: 0 8px 25px color-mix(in srgb, var(--product-text) 10%, transparent);
+}
+.community-page .community-search span, .community-page .community-my-profile span { display: none; }
+.community-page .community-tabs {
+  width: auto;
+  margin: 20px 0 0;
+  padding: 3px;
+  display: inline-flex;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--product-surface-soft) 78%, transparent);
+}
+.community-page .community-tabs button { min-height: 33px; padding: 0 13px; border-radius: 10px; font-size: 9px; }
+
+.community-page .community-stories {
+  margin: 30px -12px 25px;
+  padding: 6px 12px 12px;
+  gap: 16px;
+}
+.community-page .community-story { min-width: 92px; gap: 9px; }
+.community-page .community-story > span {
+  width: 78px;
+  height: 78px;
+  border-width: 3px;
+  box-shadow: 0 8px 23px color-mix(in srgb, var(--product-primary) 22%, transparent);
+}
+.community-page .community-story--create > span { border-radius: 25px; }
+.community-page .community-story small { font-size: 10px; }
+
+.community-page .community-publish {
+  min-height: 68px;
+  padding: 8px 11px;
+  border: 1px solid color-mix(in srgb, var(--product-line) 76%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--product-surface) 92%, var(--product-primary-soft));
+  box-shadow: 0 11px 30px color-mix(in srgb, var(--product-text) 10%, transparent);
+}
+.community-page .community-publish__intro > span { width: 46px; height: 46px; border-radius: 50%; }
+.community-page .community-publish h2 { color: var(--product-muted); font-size: 14px; font-weight: 600; }
+.community-page .community-publish nav button { width: 44px; min-height: 44px; border-radius: 50%; }
+.community-page .community-content-grid { margin-top: 31px; grid-template-columns: minmax(0, 1fr); }
+.community-page .community-content-grid > .community-ranking-card { display: none; }
+.community-page .community-section-heading { padding: 0 8px 7px; }
+.community-page .community-section-heading h2 { font-size: 16px; }
+.community-page .community-feed { gap: 21px; }
+
+.community-page .community-post {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--product-line) 74%, transparent);
+  border-radius: 30px;
+  background: color-mix(in srgb, var(--product-surface) 96%, var(--product-primary-soft));
+  box-shadow: 0 16px 42px color-mix(in srgb, var(--product-text) 9%, transparent);
+}
+.community-page .community-post > header { padding: 20px 23px 12px; }
+.community-page .community-avatar { width: 50px; height: 50px; border: 0; border-radius: 50%; }
+.community-page .community-post__author { gap: 12px !important; }
+.community-page .community-post__author strong { font-size: 15px; }
+.community-page .community-post__author small { font-size: 10px; }
+.community-page .community-post__menu > button { width: 40px; height: 40px; border-radius: 50%; }
+.community-page .community-post__body { padding: 8px 26px 13px; }
+.community-page .community-post__body > p { font-size: 18px; line-height: 1.42; letter-spacing: -.5px; }
+.community-page .community-post__activity { display: none; }
+.community-page .community-post-metrics {
+  margin: 0 23px 15px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.community-page .community-post-metrics article {
+  min-height: 68px;
+  padding: 9px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--product-line) 72%, transparent);
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--product-surface) 78%, transparent);
+  box-shadow: 0 5px 15px color-mix(in srgb, var(--product-text) 5%, transparent);
+}
+.community-page .community-post-metrics svg { color: var(--product-primary); }
+.community-page .community-post-metrics strong, .community-page .community-post-metrics small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.community-page .community-post-metrics strong { font-size: 11px; letter-spacing: -.3px; }
+.community-page .community-post-metrics small { margin-top: 3px; color: var(--product-muted); font-size: 8px; }
+.community-page .community-post__image, .community-page .community-post__missing-media {
+  width: calc(100% - 12px);
+  margin: 0 6px;
+  border-radius: 21px;
+}
+.community-page .community-post__missing-media { min-height: 260px; }
+.community-page .community-post footer { min-height: 67px; padding: 11px 27px 15px; gap: 22px; border: 0; }
+.community-page .community-post footer button { color: var(--product-text); font-size: 13px; }
+.community-page .community-post footer button svg { width: 23px; height: 23px; stroke-width: 1.75; }
+
+:root[data-theme="dark"] .community-page {
+  background: radial-gradient(ellipse 540px 370px at 110% 4%, rgba(45,224,130,.16), transparent 72%), radial-gradient(ellipse 450px 330px at -10% 78%, rgba(39,200,111,.10), transparent 75%);
+}
+:root[data-theme="dark"] .community-page .community-post { border-color: rgba(151,245,194,.12); background: linear-gradient(135deg, rgba(27,36,31,.94), rgba(10,15,12,.97)); }
+:root[data-theme="dark"] .community-page .community-post-metrics article { border-color: rgba(202,255,224,.12); background: rgba(255,255,255,.055); }
+
+@media (max-width: 640px) {
+  .community-page { padding: 21px 0 110px; }
+  .community-page .community-heading { padding: 0 2px; }
+  .community-page .community-heading h1 { font-size: 45px; letter-spacing: -2.8px; }
+  .community-page .community-heading p { margin-top: 12px; font-size: 17px; }
+  .community-page .community-heading-actions { gap: 7px; }
+  .community-page .community-search, .community-page .community-my-profile { width: 42px; min-width: 42px; min-height: 42px; }
+  .community-page .community-stories { margin-top: 23px; gap: 13px; }
+  .community-page .community-story { min-width: 78px; }
+  .community-page .community-story > span { width: 65px; height: 65px; }
+  .community-page .community-story small { max-width: 78px; font-size: 9px; }
+  .community-page .community-publish { min-height: 59px; }
+  .community-page .community-publish__intro > span { width: 39px; height: 39px; }
+  .community-page .community-publish h2 { font-size: 12px; }
+  .community-page .community-publish nav button { width: 38px; min-height: 38px; }
+  .community-page .community-content-grid { margin-top: 21px; }
+  .community-page .community-post { border-radius: 25px; }
+  .community-page .community-post > header { padding: 16px 17px 9px; }
+  .community-page .community-avatar { width: 43px; height: 43px; }
+  .community-page .community-post__body { padding: 8px 20px 12px; }
+  .community-page .community-post__body > p { font-size: 16px; }
+  .community-page .community-post-metrics { margin: 0 15px 12px; gap: 5px; }
+  .community-page .community-post-metrics article { min-height: 58px; padding: 7px; grid-template-columns: 18px minmax(0,1fr); gap: 4px; border-radius: 14px; }
+  .community-page .community-post-metrics svg { width: 17px; height: 17px; }
+  .community-page .community-post-metrics strong { font-size: 9px; }
+  .community-page .community-post-metrics small { font-size: 7px; }
+  .community-page .community-post__image, .community-page .community-post__missing-media { width: calc(100% - 8px); margin: 0 4px; border-radius: 18px; }
+  .community-page .community-post footer { min-height: 57px; padding: 9px 20px 12px; gap: 16px; }
+  .community-page .community-post footer button { font-size: 11px; }
+  .community-page .community-post footer button svg { width: 20px; height: 20px; }
+}

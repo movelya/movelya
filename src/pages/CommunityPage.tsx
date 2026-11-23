@@ -5,6 +5,7 @@ import { communityService, type CommunityComment, type CommunityData, type Commu
 import { CreateCommunityPostModal } from '../components/CreateCommunityPostModal'
 import { CommunityClubsPanel } from '../components/CommunityClubsPanel'
 import '../community.css'
+import '../communityRedesign.css'
 
 type CommunityTab = 'feed' | 'ranking' | 'clubs'
 
@@ -217,14 +218,25 @@ function PostCard({ post, viewerId, liking, onLike, onOpenProfile, onCommentAdde
 
   return <article className="community-post">
     <header><button className="community-post__author" onClick={onOpenProfile} aria-label={`Abrir perfil de ${post.profile.name}`}><span className="community-avatar">{post.profile.avatarUrl ? <img src={post.profile.avatarUrl} alt="" /> : initials}</span><span><strong>{post.profile.name}</strong><small><Flame size={12} fill="currentColor" /> atividade compartilhada</small></span></button><div className="community-post__menu"><button onClick={() => setPostMenuOpen((open) => !open)} aria-label={`Opções da publicação de ${post.profile.name}`}><Ellipsis size={19} /></button>{postMenuOpen && <div role="menu">{post.userId === viewerId ? <><button onClick={() => { setEditing(true); setPostMenuOpen(false) }}><Pencil size={14} /> Editar publicação</button><button className="is-danger" disabled={deleting} onClick={() => void deletePost()}><Trash2 size={14} /> {deleting ? 'Excluindo…' : 'Excluir publicação'}</button></> : <><button onClick={() => { setReportTarget({ type: 'post', id: post.id, name: post.profile.name }); setPostMenuOpen(false) }}><Flag size={14} /> Denunciar publicação</button><button className="is-danger" disabled={blockingUserId === post.userId} onClick={() => void blockUser(post.userId, post.profile.name)}><Ban size={14} /> {blockingUserId === post.userId ? 'Bloqueando…' : 'Bloquear usuário'}</button></>}</div>}</div></header>
-    {post.mediaUrl ? <img className="community-post__image" src={post.mediaUrl} alt="Publicação compartilhada pela comunidade" loading="lazy" /> : <div className="community-post__missing-media"><Icon size={28} /><span>{postTypeLabel(post.type)}</span></div>}
     <div className="community-post__body"><p>{post.caption || 'Atividade compartilhada na comunidade.'}</p><div className="community-post__activity"><span><Icon size={14} /></span>{activityCopy(post)}</div></div>
+    {post.activity && <CommunityPostMetrics post={post} />}
+    {post.mediaUrl ? <img className="community-post__image" src={post.mediaUrl} alt="Publicação compartilhada pela comunidade" loading="lazy" /> : <div className="community-post__missing-media"><Icon size={28} /><span>{postTypeLabel(post.type)}</span></div>}
     <footer><button className={`${post.likedByMe ? 'is-liked' : ''} ${post.likedByMe && !liking ? 'is-like-pop' : ''}`} onClick={onLike} disabled={liking} aria-label={post.likedByMe ? 'Remover curtida' : 'Curtir publicação'}><Heart size={18} fill={post.likedByMe ? 'currentColor' : 'none'} /><b>{post.likes}</b></button><button className={commentsOpen ? 'is-commenting' : ''} onClick={() => void openComments()} aria-expanded={commentsOpen} aria-label="Ver e adicionar comentários"><MessageCircle size={18} /><b>{post.comments}</b></button><time title={post.editedAt ? `Editado em ${new Date(post.editedAt).toLocaleString('pt-BR')}` : undefined}>{relativeDate(post.createdAt)}{post.editedAt ? ' · editado' : ''}</time></footer>
     {commentsOpen && <section className="community-comments" aria-label="Comentários"><header><strong>Comentários</strong><button onClick={() => setCommentsOpen(false)} aria-label="Fechar comentários"><X size={15} /></button></header><div className="community-comments__list">{loadingComments ? <span className="community-comments__loading"><LoaderCircle size={14} className="is-spinning" /> Carregando comentários…</span> : comments.length ? comments.map((item) => <article key={item.id}><span className="community-comment-avatar">{item.profile.avatarUrl ? <img src={item.profile.avatarUrl} alt="" /> : item.profile.name.slice(0, 1)}</span><div><strong>{item.profile.name}</strong><p>{item.content}</p><small>{relativeDate(item.createdAt)}</small>{item.userId === viewerId ? <button className="community-comment-action" disabled={deletingCommentId === item.id} onClick={() => void deleteComment(item.id)}>{deletingCommentId === item.id ? 'Excluindo…' : 'Excluir'}</button> : <span className="community-comment-actions"><button className="community-comment-action" onClick={() => setReportTarget({ type: 'comment', id: item.id, name: item.profile.name })}><Flag size={12} /> Denunciar</button><button className="community-comment-action is-danger" disabled={blockingUserId === item.userId} onClick={() => void blockUser(item.userId, item.profile.name)}><Ban size={12} /> Bloquear</button></span>}</div></article>) : <p className="community-comments__empty">Seja o primeiro a comentar.</p>}</div><div className="community-comment-form"><input value={comment} maxLength={500} disabled={sendingComment} placeholder="Adicionar comentário..." onChange={(event) => setComment(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void sendComment() } }} /><button onClick={() => void sendComment()} disabled={!comment.trim() || sendingComment} aria-label="Enviar comentário">{sendingComment ? <LoaderCircle size={15} className="is-spinning" /> : <Send size={15} />}</button></div>{commentError && <p className="community-comments__error">{commentError}</p>}</section>}
     {!post.isPermanent && post.expiresAt && <PostExpiration expiresAt={post.expiresAt} isOwner={post.userId === viewerId} />}
     {reportTarget && <CommunityReportModal target={reportTarget} onClose={() => setReportTarget(null)} onSubmit={submitReport} />}
     {editing && <EditPostModal post={post} userId={viewerId} onClose={() => setEditing(false)} onSaved={(caption, editedAt) => { onPostUpdated(caption, editedAt); setEditing(false) }} />}
   </article>
+}
+
+function CommunityPostMetrics({ post }: { post: CommunityPost }) {
+  if (!post.activity) return null
+  const duration = Math.max(0, Math.round(post.activity.durationSeconds / 60))
+  return <section className="community-post-metrics" aria-label="Resumo da atividade">
+    <article><Footprints size={19} /><div><strong>{post.activity.distanceKm.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} km</strong><small>Distância</small></div></article>
+    {duration > 0 && <article><Flame size={19} /><div><strong>{duration} min</strong><small>Duração</small></div></article>}
+    <article><Trophy size={19} /><div><strong>{postTypeLabel(post.type)}</strong><small>Atividade</small></div></article>
+  </section>
 }
 
 function EditPostModal({ post, userId, onClose, onSaved }: { post: CommunityPost; userId: string; onClose: () => void; onSaved: (caption: string, editedAt: string) => void }) {
