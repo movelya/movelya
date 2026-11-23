@@ -39,6 +39,47 @@
   background: color-mix(in srgb, var(--product-surface-soft) 78%, transparent);
 }
 .community-page .community-tabs button { min-height: 33px; padding: 0 13px; border-radius: 10px; font-size: 9px; }
+.vita-route-stage .community-page .community-heading {
+  position: relative !important;
+  min-height: 0 !important;
+  padding: 5px 7px 0 !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--product-text) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.vita-route-stage .community-page .community-heading::after { display: none !important; }
+.vita-route-stage .community-page .community-heading .page-eyebrow { color: var(--product-primary) !important; font-size: 9px !important; letter-spacing: 1.5px !important; }
+.vita-route-stage .community-page .community-heading h1 { margin: 3px 0 0 !important; color: var(--product-text) !important; font-size: 27px !important; line-height: 1 !important; letter-spacing: -1.25px !important; }
+.vita-route-stage .community-page .community-heading-actions { position: static !important; padding: 0 !important; }
+.vita-route-stage .community-page .community-heading p, .vita-route-stage .community-page .community-heading__accent { display: none !important; }
+:root[data-theme="light"] .vita-route-stage .community-page .community-heading,
+:root[data-theme="dark"] .vita-route-stage .community-page .community-heading { border: 0 !important; background: transparent !important; }
+:root[data-theme="light"] .vita-route-stage .community-page .community-heading h1,
+:root[data-theme="dark"] .vita-route-stage .community-page .community-heading h1 { color: var(--product-text) !important; }
+.community-social-strip {
+  width: 100%;
+  min-height: 64px;
+  margin-top: 20px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--product-primary) 24%, var(--product-line));
+  border-radius: 19px;
+  color: var(--product-text);
+  background: linear-gradient(108deg, var(--product-primary-soft), color-mix(in srgb, var(--product-surface) 92%, var(--product-primary-soft)));
+  box-shadow: 0 8px 23px color-mix(in srgb, var(--product-text) 7%, transparent);
+  text-align: left;
+  cursor: pointer;
+}
+.community-social-strip:hover { border-color: var(--product-primary); transform: translateY(-1px); }
+.community-social-strip__avatars { width: 76px; height: 37px; display: flex; align-items: center; }
+.community-social-strip__avatars i { width: 34px; height: 34px; margin-left: -9px; display: grid; place-items: center; border: 2px solid var(--product-surface); border-radius: 50%; color: var(--product-primary); background: var(--product-primary-soft); font-style: normal; }
+.community-social-strip__avatars i:first-child { margin-left: 0; color: #d86069; background: #ffe9eb; }.community-social-strip__avatars i:last-child { color: var(--product-blue); background: var(--product-blue-soft); }
+.community-social-strip > span:nth-child(2) { min-width: 0; flex: 1; }.community-social-strip strong, .community-social-strip small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.community-social-strip strong { font-size: 11px; }.community-social-strip small { margin-top: 4px; color: var(--product-muted); font-size: 9px; }.community-social-strip > svg { color: var(--product-primary); }
 
 .community-page .community-stories {
   margin: 30px -12px 25px;
@@ -125,6 +166,7 @@
 }
 :root[data-theme="dark"] .community-page .community-post { border-color: rgba(151,245,194,.12); background: linear-gradient(135deg, rgba(27,36,31,.94), rgba(10,15,12,.97)); }
 :root[data-theme="dark"] .community-page .community-post-metrics article { border-color: rgba(202,255,224,.12); background: rgba(255,255,255,.055); }
+:root[data-theme="dark"] .community-social-strip { border-color: rgba(112,249,171,.20); background: linear-gradient(108deg, rgba(31,106,70,.34), rgba(19,31,25,.72)); }
 
 @media (max-width: 640px) {
   .community-page { padding: 21px 0 110px; }
@@ -132,6 +174,8 @@
   .community-page .community-heading h1 { font-size: 45px; letter-spacing: -2.8px; }
   .community-page .community-heading p { margin-top: 12px; font-size: 17px; }
   .community-page .community-heading-actions { gap: 7px; }
+  .vita-route-stage .community-page .community-heading h1 { font-size: 26px !important; }
+  .community-social-strip { min-height: 58px; margin-top: 16px; border-radius: 17px; }.community-social-strip__avatars { width: 68px; }.community-social-strip__avatars i { width: 31px; height: 31px; }.community-social-strip strong { font-size: 10px; }.community-social-strip small { font-size: 8px; }
   .community-page .community-search, .community-page .community-my-profile { width: 42px; min-width: 42px; min-height: 42px; }
   .community-page .community-stories { margin-top: 23px; gap: 13px; }
   .community-page .community-story { min-width: 78px; }

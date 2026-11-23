@@ -4,6 +4,7 @@ import { ArrowRight, Ban, Camera, Dumbbell, Ellipsis, Flag, Flame, Footprints, H
 import { communityService, type CommunityComment, type CommunityData, type CommunityFeedPage, type CommunityPost, type CommunityPostType, type CommunityProfileSearchResult, type CommunityRankingCategory, type CommunityRankingData, type CommunityRankingScope, type CommunityReportReason } from '../services/communityService'
 import { CreateCommunityPostModal } from '../components/CreateCommunityPostModal'
 import { CommunityClubsPanel } from '../components/CommunityClubsPanel'
+import { notificationService } from '../services/notificationService'
 import '../community.css'
 import '../communityRedesign.css'
 
@@ -20,6 +21,7 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
   const [searchedFeed, setSearchedFeed] = useState<CommunityFeedPage | null>(null)
   const [searchingPosts, setSearchingPosts] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [socialUpdates, setSocialUpdates] = useState({ likes: 0, comments: 0, follows: 0, invites: 0 })
   const [notice, setNotice] = useState('')
   const [composerType, setComposerType] = useState<CommunityPostType | null>(null)
   const [pendingLikes, setPendingLikes] = useState<Record<string, boolean>>({})
@@ -53,6 +55,20 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
     }, 250)
     return () => { active = false; window.clearTimeout(timer) }
   }, [query, userId])
+
+  useEffect(() => {
+    let active = true
+    notificationService.load(userId).then(({ notifications }) => {
+      if (!active) return
+      setSocialUpdates({
+        likes: notifications.filter((item) => !item.readAt && item.type === 'social_like').length,
+        comments: notifications.filter((item) => !item.readAt && item.type === 'social_comment').length,
+        follows: notifications.filter((item) => !item.readAt && item.type === 'social_follow').length,
+        invites: notifications.filter((item) => !item.readAt && item.type === 'club_invite').length,
+      })
+    }).catch(() => undefined)
+    return () => { active = false }
+  }, [userId])
 
   const visiblePosts = useMemo(() => query.trim().length >= 2 ? searchedFeed?.posts ?? [] : data?.posts ?? [], [data?.posts, query, searchedFeed])
 
@@ -103,9 +119,11 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
 
   return <section className="community-page">
     <header className="community-heading">
-      <div><span className="page-eyebrow">MOVELYA EM MOVIMENTO</span><h1>Comunidade</h1><p>Compartilhe seus treinos, conquistas<br />e inspire outras pessoas.</p><i className="community-heading__accent" /></div>
+      <div><span className="page-eyebrow">MOVELYA</span><h1>Comunidade</h1></div>
       <div className="community-heading-actions"><button className="community-my-profile" onClick={() => onNavigate(`/perfil-social?user=${encodeURIComponent(userId)}`)}><UserRound size={16} /><span>Meu perfil</span></button><button className={`community-search ${searchOpen ? 'is-open' : ''}`} onClick={() => setSearchOpen((value) => !value)} aria-label={searchOpen ? 'Fechar pesquisa' : 'Pesquisar na comunidade'}>{searchOpen ? <X size={18} /> : <Search size={18} />}<span>Pesquisar</span></button></div>
     </header>
+
+    <SocialActivityStrip updates={socialUpdates} onOpen={() => onNavigate('/notificacoes')} />
 
     {searchOpen && <div className="community-search-wrap"><label className="community-search-field"><Search size={16} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Publicação ou @usuário" /><button onClick={() => setQuery('')} aria-label="Limpar pesquisa"><X size={14} /></button></label>{(searchingProfiles || searchResults.length > 0) && <div className="community-profile-search-results">{searchingProfiles ? <span><LoaderCircle size={14} className="is-spinning" /> Buscando perfis…</span> : searchResults.map((item) => <button key={item.userId} onClick={() => onNavigate(`/perfil-social?user=${encodeURIComponent(item.userId)}`)}><i>{item.avatarUrl ? <img src={item.avatarUrl} alt="" /> : item.name.slice(0, 1)}</i><span><strong>{item.name}</strong><small>@{item.username}{item.isPrivate ? ' · perfil privado' : ''}</small></span></button>)}</div>}</div>}
     <div className="community-tabs" role="tablist" aria-label="Seções da comunidade"><Tab label="Feed" active={tab === 'feed'} onClick={() => setTab('feed')} /><Tab label="Ranking" active={tab === 'ranking'} onClick={() => setTab('ranking')} /><Tab label="Clubes" active={tab === 'clubs'} onClick={() => setTab('clubs')} /></div>
@@ -136,6 +154,15 @@ function StoryRail({ onOpen }: { onOpen: (type: CommunityPostType) => void }) {
     { label: 'Seu treino', type: 'workout', icon: Dumbbell }, { label: 'Corrida', type: 'running', icon: Footprints }, { label: 'Receitas', type: 'food', icon: Salad }, { label: 'Lifestyle', type: 'general_fitness', icon: Flame },
   ]
   return <section className="community-stories" aria-label="Compartilhar atividade"><button className="community-story community-story--create" onClick={() => onOpen('general_fitness')}><span><Camera size={27} /><b>+</b></span><small>Criar story</small></button>{stories.map(({ label, type, icon: Icon }) => <button key={type} className={`community-story is-${type}`} onClick={() => onOpen(type)}><span><Icon size={25} /></span><small>{label}</small></button>)}</section>
+}
+
+function SocialActivityStrip({ updates, onOpen }: { updates: { likes: number; comments: number; follows: number; invites: number }; onOpen: () => void }) {
+  const total = updates.likes + updates.comments + updates.follows + updates.invites
+  return <button className="community-social-strip" onClick={onOpen} aria-label="Abrir notificações da comunidade">
+    <span className="community-social-strip__avatars"><i><Heart size={13} fill="currentColor" /></i><i><UsersRound size={13} /></i><i><MessageCircle size={13} /></i></span>
+    <span><strong>{total ? `${total} novidade${total === 1 ? '' : 's'} na sua rede` : 'Sua rede está em movimento'}</strong><small>{updates.likes ? `${updates.likes} curtida${updates.likes === 1 ? '' : 's'}` : updates.follows ? `${updates.follows} novo${updates.follows === 1 ? '' : 's'} seguidor${updates.follows === 1 ? '' : 'es'}` : 'Veja curtidas, comentários e novos seguidores'}</small></span>
+    <ArrowRight size={17} />
+  </button>
 }
 
 function PublishActivity({ onOpen }: { onOpen: (type: CommunityPostType) => void }) {
