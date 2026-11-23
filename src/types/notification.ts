@@ -1,7 +1,9 @@
-export type NotificationType = 'workout' | 'water' | 'meal' | 'walk' | 'weigh_in' | 'goal_near' | 'weekly_summary'
+export type ReminderNotificationType = 'workout' | 'water' | 'meal' | 'walk' | 'weigh_in' | 'goal_near' | 'weekly_summary'
+export type SocialNotificationType = 'social_like' | 'social_comment' | 'social_follow' | 'club_invite'
+export type NotificationType = ReminderNotificationType | SocialNotificationType
 
 export interface NotificationPreference {
-  type: NotificationType
+  type: ReminderNotificationType
   enabled: boolean
   time: string
   days: number[]

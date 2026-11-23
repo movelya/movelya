@@ -77,6 +77,15 @@ export interface CommunityClubDetail extends CommunityClub {
   challenges: CommunityClubChallenge[]
 }
 
+export interface CommunityClubInvitation {
+  id: string
+  clubId: string
+  clubName: string
+  clubDescription: string
+  invitedByName: string
+  createdAt: string
+}
+
 export interface CommunityComment {
   id: string
   userId: string
@@ -212,6 +221,36 @@ export const communityService = {
     const { data, error } = await supabase.rpc('community_club_directory')
     if (error) throw error
     return (data ?? []).map(mapCommunityClub)
+  },
+
+  async listMyClubs(): Promise<CommunityClub[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase.rpc('community_my_clubs')
+    if (error) throw error
+    return (data ?? []).map(mapCommunityClub)
+  },
+
+  async listClubInvitations(): Promise<CommunityClubInvitation[]> {
+    if (!supabase) return []
+    const { data, error } = await supabase.rpc('community_my_club_invitations')
+    if (error) throw error
+    return (data ?? []).map((item: any) => ({
+      id: String(item.id), clubId: String(item.club_id), clubName: String(item.club_name), clubDescription: String(item.club_description ?? ''),
+      invitedByName: String(item.invited_by_name ?? 'Membro MOVELYA'), createdAt: String(item.created_at),
+    }))
+  },
+
+  async inviteToClub(clubId: string, userId: string) {
+    if (!supabase) throw new Error('A conexão com a Comunidade não está disponível.')
+    const { error } = await supabase.rpc('community_invite_to_club', { target_club_id: clubId, target_user_id: userId })
+    if (error) throw error
+  },
+
+  async respondToClubInvitation(invitationId: string, accept: boolean) {
+    if (!supabase) throw new Error('A conexão com a Comunidade não está disponível.')
+    const { data, error } = await supabase.rpc('community_respond_to_club_invitation', { target_invitation_id: invitationId, accept_invitation: accept })
+    if (error) throw error
+    return { accepted: Boolean((data as any)?.accepted), clubId: String((data as any)?.club_id ?? '') }
   },
 
   async createClub(userId: string, input: { name: string; description: string; privacy: 'public' | 'private' }): Promise<string> {

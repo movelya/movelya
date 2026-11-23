@@ -105,7 +105,7 @@ export function CommunityPage({ userId, onNavigate }: { userId: string; onNaviga
           <WeeklyRanking ranking={data.ranking} onMore={() => setTab('ranking')} />
         </div>
       </>}
-      {tab === 'ranking' && <RankingPanel initialRanking={data.ranking} onOpenProfile={(targetUserId) => onNavigate(`/perfil-social?user=${encodeURIComponent(targetUserId)}`)} />}
+      {tab === 'ranking' && <RankingPanel userId={userId} initialRanking={data.ranking} onOpenProfile={(targetUserId) => onNavigate(`/perfil-social?user=${encodeURIComponent(targetUserId)}`)} />}
       {tab === 'clubs' && <CommunityClubsPanel userId={userId} />}
     </>}
     {notice && <button className="community-toast" onClick={() => setNotice('')} role="status">{notice}<X size={14} /></button>}
@@ -241,25 +241,32 @@ function CommunityReportModal({ target, onClose, onSubmit }: { target: { type: '
   </div>, document.body)
 }
 
-function RankingPanel({ initialRanking, onOpenProfile }: { initialRanking: CommunityRankingData; onOpenProfile: (userId: string) => void }) {
+function RankingPanel({ userId, initialRanking, onOpenProfile }: { userId: string; initialRanking: CommunityRankingData; onOpenProfile: (userId: string) => void }) {
   const [scope, setScope] = useState<CommunityRankingScope>('global')
   const [category, setCategory] = useState<CommunityRankingCategory>('streak')
   const [ranking, setRanking] = useState<CommunityRankingData>(initialRanking)
+  const [clubs, setClubs] = useState<Array<{ id: string; name: string }>>([])
+  const [clubId, setClubId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  useEffect(() => { let active = true; communityService.listMyClubs().then((items) => { if (active) setClubs(items.map((club) => ({ id: club.id, name: club.name }))) }).catch(() => undefined); return () => { active = false } }, [userId])
   useEffect(() => {
     let active = true
     setLoading(true); setError('')
-    communityService.loadRanking(scope, category).then((result) => { if (active) setRanking(result) }).catch(() => { if (active) setError('Não foi possível atualizar este ranking agora.') }).finally(() => { if (active) setLoading(false) })
+    const rankingRequest = clubId ? communityService.loadClubRanking(clubId, category) : communityService.loadRanking(scope, category)
+    rankingRequest.then((result) => { if (active) setRanking(result) }).catch(() => { if (active) setError('Não foi possível atualizar este ranking agora.') }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [scope, category])
+  }, [scope, category, clubId])
+
+  function selectScope(nextScope: CommunityRankingScope) { setClubId(''); setScope(nextScope) }
+  function selectClub(nextClubId: string) { setClubId(nextClubId); if (!nextClubId) setScope('global') }
 
   return <section className="community-ranking-panel">
     <div className="community-section-heading"><div><small>RANKINGS SEMANAIS</small><h2>Ritmo que inspira</h2><p>{rankingWeekLabel(ranking.weekStart)} · reinicia toda segunda-feira.</p></div></div>
-    <div className="community-ranking-filters" aria-label="Escopo do ranking"><button className={scope === 'friends' ? 'is-active' : ''} onClick={() => setScope('friends')}>Amigos</button><button disabled title="Os clubes chegarão em breve">Clube <small>em breve</small></button><button className={scope === 'global' ? 'is-active' : ''} onClick={() => setScope('global')}>Global</button></div>
+    <div className="community-ranking-filters" aria-label="Escopo do ranking"><button className={!clubId && scope === 'friends' ? 'is-active' : ''} onClick={() => selectScope('friends')}>Amigos</button>{clubs.length ? <label className={clubId ? 'is-active' : ''}>Clube<select value={clubId} onChange={(event) => selectClub(event.target.value)} aria-label="Escolher clube para o ranking"><option value="">Escolher</option>{clubs.map((club) => <option key={club.id} value={club.id}>{club.name}</option>)}</select></label> : <button disabled title="Entre em um clube para acompanhar o ranking dele">Clube</button>}<button className={!clubId && scope === 'global' ? 'is-active' : ''} onClick={() => selectScope('global')}>Global</button></div>
     <div className="community-ranking-categories" role="tablist" aria-label="Categoria do ranking"><RankingCategoryButton icon={Flame} label="Sequência ativa" active={category === 'streak'} onClick={() => setCategory('streak')} /><RankingCategoryButton icon={Dumbbell} label="Mais treinos" active={category === 'workouts'} onClick={() => setCategory('workouts')} /><RankingCategoryButton icon={Footprints} label="Mais quilômetros" active={category === 'distance'} onClick={() => setCategory('distance')} /></div>
-    {loading ? <div className="community-ranking-loading"><span /><span /><span /></div> : error ? <div className="community-empty-inline"><Medal size={25} /><strong>{error}</strong><button onClick={() => { setError(''); setLoading(true); communityService.loadRanking(scope, category).then(setRanking).catch(() => setError('Não foi possível atualizar este ranking agora.')).finally(() => setLoading(false)) }}>Tentar novamente</button></div> : ranking.entries.length ? <><ol className="community-ranking-list">{ranking.entries.map((item) => <li key={item.userId} className={`${item.position <= 3 ? `is-podium is-place-${item.position}` : ''} ${item.isCurrentUser ? 'is-current-user' : ''}`}><b>#{item.position}</b><button onClick={() => onOpenProfile(item.userId)} aria-label={`Abrir perfil de ${item.name}`}>{item.avatarUrl ? <img src={item.avatarUrl} alt="" /> : item.name.slice(0, 1)}</button><button className="community-ranking-list__name" onClick={() => onOpenProfile(item.userId)}><strong>{item.isCurrentUser ? 'Você' : item.name}</strong><small>{item.isCurrentUser ? 'Sua posição nesta categoria' : rankingScopeLabel(scope)}</small></button><em>{formatRankingMetric(category, item.metric)}</em></li>)}</ol>{ranking.myPosition && !ranking.entries.some((item) => item.isCurrentUser) && <div className="community-ranking-you"><span><UserRound size={17} /></span><div><small>SUA POSIÇÃO</small><strong>Você está em #{ranking.myPosition}</strong></div><b>{formatRankingMetric(category, ranking.myMetric ?? 0)}</b></div>}</> : <div className="community-empty-inline"><Medal size={25} /><strong>{scope === 'friends' ? 'Nenhum amigo entrou neste ranking ainda.' : 'O ranking está esperando o primeiro movimento.'}</strong><p>{category === 'streak' ? 'Conclua uma atividade física válida para entrar na sequência ativa.' : 'O ranking considera apenas atividades concluídas e válidas nesta semana.'}</p></div>}
+    {loading ? <div className="community-ranking-loading"><span /><span /><span /></div> : error ? <div className="community-empty-inline"><Medal size={25} /><strong>{error}</strong></div> : ranking.entries.length ? <><ol className="community-ranking-list">{ranking.entries.map((item) => <li key={item.userId} className={`${item.position <= 3 ? `is-podium is-place-${item.position}` : ''} ${item.isCurrentUser ? 'is-current-user' : ''}`}><b>#{item.position}</b><button onClick={() => onOpenProfile(item.userId)} aria-label={`Abrir perfil de ${item.name}`}>{item.avatarUrl ? <img src={item.avatarUrl} alt="" /> : item.name.slice(0, 1)}</button><button className="community-ranking-list__name" onClick={() => onOpenProfile(item.userId)}><strong>{item.isCurrentUser ? 'Você' : item.name}</strong><small>{item.isCurrentUser ? 'Sua posição nesta categoria' : clubId ? 'Membro do clube' : rankingScopeLabel(scope)}</small></button><em>{formatRankingMetric(category, item.metric)}</em></li>)}</ol>{ranking.myPosition && !ranking.entries.some((item) => item.isCurrentUser) && <div className="community-ranking-you"><span><UserRound size={17} /></span><div><small>SUA POSIÇÃO</small><strong>Você está em #{ranking.myPosition}</strong></div><b>{formatRankingMetric(category, ranking.myMetric ?? 0)}</b></div>}</> : <div className="community-empty-inline"><Medal size={25} /><strong>{scope === 'friends' && !clubId ? 'Nenhum amigo entrou neste ranking ainda.' : 'O ranking está esperando o primeiro movimento.'}</strong><p>{category === 'streak' ? 'Conclua uma atividade física válida para entrar na sequência ativa.' : 'O ranking considera apenas atividades concluídas e válidas nesta semana.'}</p></div>}
   </section>
 }
 

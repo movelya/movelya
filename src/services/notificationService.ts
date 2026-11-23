@@ -1,5 +1,5 @@
 import { supabase } from '../integrations/supabase'
-import type { AppNotification, NotificationPreference, NotificationSettings, NotificationType } from '../types/notification'
+import type { AppNotification, NotificationPreference, NotificationSettings, NotificationType, ReminderNotificationType } from '../types/notification'
 
 export const defaultPreferences: NotificationPreference[] = [
   { type: 'workout', enabled: true, time: '18:00', days: [1, 3, 5], intervalMinutes: null },
@@ -109,7 +109,7 @@ export const notificationService = {
   stopReminderScheduler,
 }
 
-export function isNotificationAllowed(settings: NotificationSettings, type: NotificationType, now = new Date(), lastSentAt?: string) {
+export function isNotificationAllowed(settings: NotificationSettings, type: ReminderNotificationType, now = new Date(), lastSentAt?: string) {
   const preference = settings.preferences.find((item) => item.type === type)
   if (!preference?.enabled || (settings.pausedUntil && new Date(settings.pausedUntil) > now) || !preference.days.includes(now.getDay())) return false
   const minutes = now.getHours() * 60 + now.getMinutes()
@@ -153,8 +153,8 @@ function isDueNow(preference: NotificationPreference, now: Date) {
   if (!preference.intervalMinutes) return currentMinute === initialMinute
   return currentMinute >= initialMinute && (currentMinute - initialMinute) % preference.intervalMinutes === 0
 }
-async function showReminder(type: NotificationType) {
-  const copy: Record<NotificationType, { title: string; body: string }> = {
+async function showReminder(type: ReminderNotificationType) {
+  const copy: Record<ReminderNotificationType, { title: string; body: string }> = {
     workout: { title: 'Hora do treino', body: 'Seu treino planejado está esperando por você.' }, water: { title: 'Hora de beber água', body: 'Um copo agora ajuda você a manter sua meta.' }, meal: { title: 'Registrar refeição', body: 'Registre sua refeição para manter o diário em dia.' }, walk: { title: 'Que tal caminhar?', body: 'Alguns minutos de movimento já fazem diferença.' }, weigh_in: { title: 'Lembrete de pesagem', body: 'Registre seu peso para acompanhar a evolução.' }, goal_near: { title: 'Sua meta está perto', body: 'Você está a poucos passos de concluir a meta de hoje.' }, weekly_summary: { title: 'Seu resumo semanal', body: 'Confira o que você conquistou nesta semana.' },
   }
   const registration = 'serviceWorker' in navigator ? await navigator.serviceWorker.ready : undefined

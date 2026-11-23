@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Dumbbell, Flame, Footprints, LoaderCircle, LockKeyhole, Medal, Target, Trophy, UsersRound } from 'lucide-react'
-import { communityService, type ClubChallengeMetric, type CommunityClub, type CommunityClubChallenge, type CommunityClubDetail, type CommunityRankingCategory, type CommunityRankingData } from '../services/communityService'
+import { ArrowLeft, Dumbbell, Flame, Footprints, LoaderCircle, LockKeyhole, Medal, Target, Trophy, UserPlus, UsersRound } from 'lucide-react'
+import { communityService, type ClubChallengeMetric, type CommunityClub, type CommunityClubChallenge, type CommunityClubDetail, type CommunityClubInvitation, type CommunityProfileSearchResult, type CommunityRankingCategory, type CommunityRankingData } from '../services/communityService'
 import '../community.css'
 
 export function CommunityClubsPanel({ userId }: { userId: string }) {
@@ -13,8 +13,9 @@ export function CommunityClubsPanel({ userId }: { userId: string }) {
   const [clubName, setClubName] = useState('')
   const [clubDescription, setClubDescription] = useState('')
   const [clubPrivacy, setClubPrivacy] = useState<'public' | 'private'>('public')
+  const [invitations, setInvitations] = useState<CommunityClubInvitation[]>([])
 
-  function loadDirectory() { setLoading(true); setError(''); communityService.listClubs().then(setClubs).catch(() => setError('Não foi possível carregar os clubes agora.')).finally(() => setLoading(false)) }
+  function loadDirectory() { setLoading(true); setError(''); Promise.all([communityService.listClubs(), communityService.listClubInvitations()]).then(([directory, pending]) => { setClubs(directory); setInvitations(pending) }).catch(() => setError('Não foi possível carregar os clubes agora.')).finally(() => setLoading(false)) }
   useEffect(() => { loadDirectory() }, [])
 
   async function createClub() {
@@ -25,10 +26,17 @@ export function CommunityClubsPanel({ userId }: { userId: string }) {
     finally { setSavingClub(false) }
   }
 
+  async function respondInvitation(invitationId: string, accept: boolean) {
+    setError('')
+    try { await communityService.respondToClubInvitation(invitationId, accept); setInvitations((items) => items.filter((item) => item.id !== invitationId)); if (accept) loadDirectory() }
+    catch { setError('Não foi possível responder a este convite agora.') }
+  }
+
   if (selectedClubId) return <ClubDetail clubId={selectedClubId} userId={userId} onBack={() => { setSelectedClubId(null); loadDirectory() }} />
   return <section className="community-clubs-panel">
     <header className="community-section-heading"><div><small>CLUBES</small><h2>Encontre seu ritmo em grupo</h2><p>Comunidades focadas em atividade, desafios e evolução — sem chat.</p></div><button className="community-club-create-trigger" onClick={() => setCreating((value) => !value)}>{creating ? 'Cancelar' : 'Criar clube'}</button></header>
-    {creating && <section className="community-club-create"><div><small>NOVO CLUBE</small><h3>Comece uma comunidade de movimento</h3></div><label>Nome<input value={clubName} maxLength={60} placeholder="Ex.: Corredores da manhã" onChange={(event) => setClubName(event.target.value)} /></label><label>Descrição<textarea value={clubDescription} maxLength={500} placeholder="Qual é o foco do grupo?" onChange={(event) => setClubDescription(event.target.value)} /></label><label>Privacidade<select value={clubPrivacy} onChange={(event) => setClubPrivacy(event.target.value as 'public' | 'private')}><option value="public">Público</option><option value="private">Privado</option></select></label><button disabled={savingClub || clubName.trim().length < 3} onClick={() => void createClub()}>{savingClub ? <LoaderCircle size={15} className="is-spinning" /> : <UsersRound size={15} />}Criar clube</button><p>Você será o proprietário. Convites para clubes privados serão adicionados em uma próxima etapa.</p></section>}
+    {creating && <section className="community-club-create"><div><small>NOVO CLUBE</small><h3>Comece uma comunidade de movimento</h3></div><label>Nome<input value={clubName} maxLength={60} placeholder="Ex.: Corredores da manhã" onChange={(event) => setClubName(event.target.value)} /></label><label>Descrição<textarea value={clubDescription} maxLength={500} placeholder="Qual é o foco do grupo?" onChange={(event) => setClubDescription(event.target.value)} /></label><label>Privacidade<select value={clubPrivacy} onChange={(event) => setClubPrivacy(event.target.value as 'public' | 'private')}><option value="public">Público</option><option value="private">Privado</option></select></label><button disabled={savingClub || clubName.trim().length < 3} onClick={() => void createClub()}>{savingClub ? <LoaderCircle size={15} className="is-spinning" /> : <UsersRound size={15} />}Criar clube</button><p>Você será o proprietário. Em clubes privados, você poderá convidar pessoas pela busca da Comunidade.</p></section>}
+    {invitations.length > 0 && <section className="community-club-invitations"><small>SEUS CONVITES</small>{invitations.map((invitation) => <article key={invitation.id}><span><LockKeyhole size={17} /></span><div><strong>{invitation.clubName}</strong><p>{invitation.invitedByName} convidou você para este clube privado.</p></div><button onClick={() => void respondInvitation(invitation.id, false)}>Recusar</button><button className="is-accept" onClick={() => void respondInvitation(invitation.id, true)}>Aceitar</button></article>)}</section>}
     {loading ? <div className="community-club-loading"><span /><span /><span /></div> : error ? <div className="community-empty-inline"><UsersRound size={25} /><strong>{error}</strong><button onClick={loadDirectory}>Tentar novamente</button></div> : clubs.length ? <div className="community-club-grid">{clubs.map((club) => <ClubCard key={club.id} club={club} onOpen={() => setSelectedClubId(club.id)} />)}</div> : <div className="community-empty-inline"><UsersRound size={25} /><strong>Crie o primeiro clube.</strong><p>Junte pessoas em torno de um ritmo, uma modalidade ou um desafio.</p></div>}
   </section>
 }
@@ -48,6 +56,9 @@ function ClubDetail({ clubId, userId, onBack }: { clubId: string; userId: string
   const [challengeMetric, setChallengeMetric] = useState<ClubChallengeMetric>('workouts')
   const [challengeTarget, setChallengeTarget] = useState('4')
   const [challengePeriod, setChallengePeriod] = useState<'week' | 'month'>('week')
+  const [inviteQuery, setInviteQuery] = useState('')
+  const [inviteResults, setInviteResults] = useState<CommunityProfileSearchResult[]>([])
+  const [inviting, setInviting] = useState(false)
 
   async function load() {
     setLoading(true); setMessage('')
@@ -60,6 +71,12 @@ function ClubDetail({ clubId, userId, onBack }: { clubId: string; userId: string
   }
   useEffect(() => { void load() }, [clubId])
   useEffect(() => { if (!club || club.state !== 'available') return; communityService.loadClubRanking(clubId, category).then(setRanking).catch(() => setMessage('Não foi possível atualizar o ranking.')) }, [clubId, category])
+  useEffect(() => {
+    const query = inviteQuery.trim()
+    if (!club || club.privacy !== 'private' || query.length < 2) { setInviteResults([]); return }
+    const timeout = window.setTimeout(() => { communityService.searchProfiles(query).then(setInviteResults).catch(() => setInviteResults([])) }, 250)
+    return () => window.clearTimeout(timeout)
+  }, [club, inviteQuery])
 
   async function toggleMembership() {
     if (!club || busy || club.role === 'owner') return
@@ -83,6 +100,13 @@ function ClubDetail({ clubId, userId, onBack }: { clubId: string; userId: string
     catch { setMessage('Não foi possível criar o desafio. Confira os dados e tente novamente.') }
     finally { setBusy(false) }
   }
+  async function invite(profile: CommunityProfileSearchResult) {
+    if (!club || inviting) return
+    setInviting(true); setMessage('')
+    try { await communityService.inviteToClub(club.id, profile.userId); setInviteQuery(''); setInviteResults([]); setMessage(`Convite enviado para ${profile.name}.`) }
+    catch { setMessage('Não foi possível enviar o convite. A pessoa pode já fazer parte do clube ou ter uma relação bloqueada.') }
+    finally { setInviting(false) }
+  }
 
   if (loading) return <section className="community-club-detail"><button className="community-profile-back" onClick={onBack}><ArrowLeft size={16} /> Clubes</button><div className="community-club-loading"><span /><span /><span /></div></section>
   if (!club || club.state !== 'available') return <section className="community-club-detail"><button className="community-profile-back" onClick={onBack}><ArrowLeft size={16} /> Clubes</button><div className="community-empty-inline"><LockKeyhole size={25} /><strong>{club?.state === 'private' ? 'Este clube é privado.' : 'Clube indisponível.'}</strong><p>{club?.state === 'private' ? 'Você precisa receber acesso antes de ver as atividades do grupo.' : message || 'Tente novamente mais tarde.'}</p></div></section>
@@ -91,6 +115,7 @@ function ClubDetail({ clubId, userId, onBack }: { clubId: string; userId: string
     <button className="community-profile-back" onClick={onBack}><ArrowLeft size={16} /> Clubes</button>
     <header className="community-club-hero">{club.coverUrl ? <img src={club.coverUrl} alt="" /> : <div className="community-club-hero__pattern" />}<div><span className="community-club-avatar">{club.avatarUrl ? <img src={club.avatarUrl} alt="" /> : club.name.slice(0, 1)}</span><div><small>{club.privacy === 'private' ? 'CLUBE PRIVADO' : 'CLUBE PÚBLICO'}</small><h2>{club.name}</h2><p>{club.description || 'Atividade e consistência em comunidade.'}</p></div><button className={`community-club-membership ${club.joined ? 'is-joined' : ''}`} disabled={busy || club.role === 'owner'} onClick={() => void toggleMembership()}>{busy ? <LoaderCircle size={15} className="is-spinning" /> : club.joined ? 'Sair do clube' : 'Entrar no clube'}</button></div><footer><span><UsersRound size={15} /> {club.membersCount} membros</span><span><Target size={15} /> {club.challenges.length} desafios</span></footer></header>
     {message && <p className="community-club-message">{message}</p>}
+    {canManage && club.privacy === 'private' && <section className="community-club-invite"><div><small>CONVIDAR MEMBROS</small><h3>Quem entra no seu ritmo?</h3><p>Busque pelo nome ou @usuário da Comunidade.</p></div><label><UserPlus size={16} /><input value={inviteQuery} maxLength={60} placeholder="Nome ou @usuário" onChange={(event) => setInviteQuery(event.target.value)} /></label>{inviteResults.length > 0 && <div className="community-club-invite__results">{inviteResults.map((profile) => <button key={profile.userId} disabled={inviting} onClick={() => void invite(profile)}><span>{profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : profile.name.slice(0, 1)}</span><div><strong>{profile.name}</strong><small>@{profile.username}</small></div><UserPlus size={16} /></button>)}</div>}</section>}
     <section className="community-club-ranking"><div className="community-section-heading"><div><small>RANKING DO CLUBE</small><h2>Consistência compartilhada</h2></div></div><div className="community-ranking-categories"><ClubRankingButton icon={Flame} label="Sequência" active={category === 'streak'} onClick={() => setCategory('streak')} /><ClubRankingButton icon={Dumbbell} label="Treinos" active={category === 'workouts'} onClick={() => setCategory('workouts')} /><ClubRankingButton icon={Footprints} label="Km" active={category === 'distance'} onClick={() => setCategory('distance')} /></div>{ranking?.entries.length ? <ol className="community-ranking-list">{ranking.entries.slice(0, 5).map((item) => <li key={item.userId} className={item.position <= 3 ? 'is-podium' : ''}><b>#{item.position}</b><span>{item.avatarUrl ? <img src={item.avatarUrl} alt="" /> : item.name.slice(0, 1)}</span><div><strong>{item.isCurrentUser ? 'Você' : item.name}</strong><small>{item.isCurrentUser ? 'Sua posição no clube' : 'Membro do clube'}</small></div><em>{rankingMetric(category, item.metric)}</em></li>)}</ol> : <div className="community-empty-inline"><Medal size={23} /><strong>O ranking começa com o primeiro movimento válido.</strong></div>}</section>
     <section className="community-club-challenges"><div className="community-section-heading"><div><small>DESAFIOS</small><h2>Um objetivo por vez</h2><p>Seu progresso é validado automaticamente pelas atividades reais.</p></div>{canManage && <button className="community-challenge-create-trigger" onClick={() => setCreatingChallenge((value) => !value)}>{creatingChallenge ? 'Cancelar' : 'Criar desafio'}</button>}</div>{creatingChallenge && <ChallengeCreator title={challengeTitle} description={challengeDescription} metric={challengeMetric} target={challengeTarget} period={challengePeriod} busy={busy} onTitle={setChallengeTitle} onDescription={setChallengeDescription} onMetric={setChallengeMetric} onTarget={setChallengeTarget} onPeriod={setChallengePeriod} onCreate={() => void createChallenge()} />}{club.challenges.length ? <div className="community-challenge-list">{club.challenges.map((challenge) => <ChallengeCard key={challenge.id} challenge={challenge} member={club.joined} busy={busy} onJoin={() => void joinChallenge(challenge.id)} />)}</div> : <div className="community-empty-inline"><Target size={23} /><strong>Novos desafios serão publicados em breve.</strong><p>{canManage ? 'Crie uma meta semanal ou mensal para o clube.' : 'Acompanhe esta área para entrar no próximo desafio.'}</p></div>}</section>
   </section>

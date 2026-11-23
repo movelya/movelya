@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Bell, BellRing, Check, CheckCheck, ChevronRight, Clock3, Dumbbell, Footprints, GlassWater, Goal, Pause, Scale, Soup, Sparkles, TriangleAlert } from 'lucide-react'
 import { Button, Card } from '../components/ui'
 import { defaultNotificationSettings, notificationService } from '../services/notificationService'
-import type { AppNotification, NotificationPreference, NotificationSettings, NotificationType } from '../types/notification'
+import type { AppNotification, NotificationPreference, NotificationSettings, NotificationType, ReminderNotificationType } from '../types/notification'
 import '../notifications.css'
 
 const dayLabels = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -14,6 +14,10 @@ const notificationContent: Record<NotificationType, { title: string; description
   weigh_in: { title: 'Pesagem semanal', description: 'Uma vez por semana, sempre no mesmo horário.', icon: Scale, tone: 'pink' },
   goal_near: { title: 'Meta quase atingida', description: 'Só aparece quando faltar pouco para concluir.', icon: Goal, tone: 'yellow' },
   weekly_summary: { title: 'Resumo semanal', description: 'Seu progresso da semana em uma visão rápida.', icon: Sparkles, tone: 'green' },
+  social_like: { title: 'Curtida na Comunidade', description: 'Alguém curtiu uma publicação sua.', icon: Sparkles, tone: 'pink' },
+  social_comment: { title: 'Comentário na Comunidade', description: 'Uma pessoa respondeu à sua publicação.', icon: Bell, tone: 'purple' },
+  social_follow: { title: 'Novo seguidor', description: 'Uma pessoa começou a acompanhar sua jornada.', icon: BellRing, tone: 'green' },
+  club_invite: { title: 'Convite para clube', description: 'Você foi convidado para um clube privado.', icon: Goal, tone: 'orange' },
 }
 
 export function NotificationsPage({ userId, onNavigate }: { userId: string; onNavigate: (path: string) => void }) {
@@ -33,7 +37,7 @@ export function NotificationsPage({ userId, onNavigate }: { userId: string; onNa
   }, [userId])
   useEffect(() => { if (!notice) return; const timer = window.setTimeout(() => setNotice(''), 3500); return () => window.clearTimeout(timer) }, [notice])
 
-  function updatePreference(type: NotificationType, update: Partial<NotificationPreference>) {
+  function updatePreference(type: ReminderNotificationType, update: Partial<NotificationPreference>) {
     setSettings((current) => ({ ...current, preferences: current.preferences.map((item) => item.type === type ? { ...item, ...update } : item) }))
   }
   function toggleDay(preference: NotificationPreference, day: number) {
