@@ -43,6 +43,7 @@ export function CreateCommunityPostModal({ userId, initialType = 'workout', onCl
   }, [])
 
   useEffect(() => () => { if (image) URL.revokeObjectURL(image.previewUrl) }, [image])
+  useEffect(() => { document.body.classList.add('community-composer-open'); return () => document.body.classList.remove('community-composer-open') }, [])
 
   async function selectImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
