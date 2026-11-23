@@ -43,6 +43,13 @@
   background: var(--product-bg);
 }
 
+@media (max-width: 720px) {
+  .vita-bottom-nav button[data-route="comunidade"] { position: relative; }
+  .vita-bottom-nav button[data-route="comunidade"] .community-dock-mark { width: 43px; height: 43px; margin-top: -5px !important; overflow: hidden; border: 1px solid rgba(82,250,174,.68) !important; border-radius: 50%; background: #07130e !important; box-shadow: 0 0 0 3px rgba(55,242,151,.10), 0 0 19px rgba(55,242,151,.32) !important; }
+  .vita-bottom-nav button[data-route="comunidade"] .community-dock-mark img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  .vita-bottom-nav button[data-route="comunidade"].is-active .community-dock-mark { transform: scale(1.05) !important; box-shadow: 0 0 0 4px rgba(55,242,151,.13), 0 0 28px rgba(55,242,151,.58) !important; }
+}
+
 :root[data-theme="dark"] {
   --product-bg: #0d1210;
   --product-surface: #151c18;

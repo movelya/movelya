@@ -127,7 +127,7 @@ export function MobileNavigation({ activeRoute, onNavigate }: NavigationProps) {
           onClick={() => onNavigate(path)}
           aria-current={activeRoute === id ? 'page' : undefined}
         >
-          <span className="bottom-icon"><Icon size={21} /></span>
+          <span className={`bottom-icon ${id === 'comunidade' ? 'community-dock-mark' : ''}`}>{id === 'comunidade' ? <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" /> : <Icon size={21} />}</span>
           <span>{mobileLabel ?? label}</span>
         </button>
       ))}
