@@ -70,8 +70,10 @@
   border: 1px solid color-mix(in srgb, var(--product-primary) 24%, var(--product-line));
   border-radius: 19px;
   color: var(--product-text);
-  background: linear-gradient(108deg, var(--product-primary-soft), color-mix(in srgb, var(--product-surface) 92%, var(--product-primary-soft)));
-  box-shadow: 0 8px 23px color-mix(in srgb, var(--product-text) 7%, transparent);
+  background: linear-gradient(108deg, color-mix(in srgb, var(--product-surface) 65%, transparent), color-mix(in srgb, var(--product-primary-soft) 55%, transparent));
+  box-shadow: 0 8px 23px color-mix(in srgb, var(--product-text) 7%, transparent), inset 0 1px rgba(255,255,255,.72), inset 0 -1px rgba(18,130,90,.09);
+  backdrop-filter: blur(22px) saturate(155%);
+  -webkit-backdrop-filter: blur(22px) saturate(155%);
   text-align: left;
   cursor: pointer;
 }

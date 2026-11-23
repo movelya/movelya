@@ -38,6 +38,7 @@ const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(({
 const AchievementsPage = lazy(() => import('./pages/AchievementsPage').then(({ AchievementsPage }) => ({ default: AchievementsPage })))
 const CommunityPage = lazy(() => import('./pages/CommunityPage').then(({ CommunityPage }) => ({ default: CommunityPage })))
 const CommunityProfilePage = lazy(() => import('./pages/CommunityProfilePage').then(({ CommunityProfilePage }) => ({ default: CommunityProfilePage })))
+const CommunityActivityPage = lazy(() => import('./pages/CommunityActivityPage').then(({ CommunityActivityPage }) => ({ default: CommunityActivityPage })))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage').then(({ PrivacyPage }) => ({ default: PrivacyPage })))
 const AdminPage = lazy(() => import('./pages/AdminPage').then(({ AdminPage }) => ({ default: AdminPage })))
 const PlansPage = lazy(() => import('./pages/PlansPage').then(({ PlansPage }) => ({ default: PlansPage })))
@@ -304,6 +305,8 @@ export default function App() {
                 <CommunityPage userId={user?.id ?? 'development-preview'} onNavigate={navigate} />
               ) : route?.id === 'perfil-social' && user ? (
                 <CommunityProfilePage viewerId={user.id} targetUserId={communityProfileUserId()} onNavigate={navigate} />
+              ) : route?.id === 'atividade-comunidade' && user ? (
+                <CommunityActivityPage userId={user.id} onNavigate={navigate} />
               ) : route ? (
                 <RoutePlaceholder route={route} onNavigate={navigate} />
               ) : (
