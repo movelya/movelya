@@ -212,6 +212,8 @@
   .community-composer-backdrop { padding: 0 !important; place-items: end center !important; }
   .community-composer { width: 100% !important; max-height: 100dvh !important; min-height: min(620px, 86dvh); border-radius: 24px 24px 0 0 !important; }
   .community-composer__body { padding: 14px 15px calc(18px + env(safe-area-inset-bottom)) !important; overscroll-behavior: contain; }
+  .community-composer__body > :is(.community-image-picker, .community-image-preview) { position: sticky; z-index: 3; top: -14px; box-shadow: 0 10px 22px color-mix(in srgb, var(--product-text) 12%, transparent); }
+  .community-composer__body > .community-image-picker { background: var(--product-surface-soft); }
   .community-composer > footer { padding: 12px 15px calc(12px + env(safe-area-inset-bottom)) !important; background: var(--product-surface); }
   .community-composer > footer .community-publish-button { min-width: 112px; justify-content: center; }
 }

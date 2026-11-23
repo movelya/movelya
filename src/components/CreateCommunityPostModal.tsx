@@ -23,6 +23,7 @@ export function CreateCommunityPostModal({ userId, initialType = 'workout', onCl
   const [planCode, setPlanCode] = useState<PlanCode | null>(null)
   const cameraInput = useRef<HTMLInputElement>(null)
   const libraryInput = useRef<HTMLInputElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
 
   const supportsActivity = type === 'running' || type === 'walking'
   const selectedCategory = categories.find((category) => category.value === type) ?? categories[0]
@@ -44,6 +45,7 @@ export function CreateCommunityPostModal({ userId, initialType = 'workout', onCl
 
   useEffect(() => () => { if (image) URL.revokeObjectURL(image.previewUrl) }, [image])
   useEffect(() => { document.body.classList.add('community-composer-open'); return () => document.body.classList.remove('community-composer-open') }, [])
+  useEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = 0 }, [])
 
   async function selectImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -71,7 +73,7 @@ export function CreateCommunityPostModal({ userId, initialType = 'workout', onCl
   return <div className="community-composer-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !publishing) onClose() }}>
     <section className="community-composer" role="dialog" aria-modal="true" aria-labelledby="community-composer-title">
       <header><div><small>NOVA PUBLICAÇÃO</small><h2 id="community-composer-title">Compartilhe seu movimento</h2></div><button onClick={onClose} disabled={publishing} aria-label="Fechar criação de publicação"><X size={19} /></button></header>
-      <div className="community-composer__body">
+      <div className="community-composer__body" ref={bodyRef}>
         <input ref={libraryInput} className="community-file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={selectImage} />
         <input ref={cameraInput} className="community-file-input" type="file" accept="image/*" capture="environment" onChange={selectImage} />
         {image ? <div className="community-image-preview"><img src={image.previewUrl} alt="Prévia da foto selecionada" /><button onClick={() => setImage((current) => { if (current) URL.revokeObjectURL(current.previewUrl); return null })} disabled={publishing}><X size={16} /> Remover</button></div> : <div className={`community-image-picker ${preparing ? 'is-preparing' : ''}`}><span>{preparing ? <LoaderCircle size={23} className="is-spinning" /> : <ImagePlus size={23} />}</span><strong>{preparing ? 'Otimizando sua foto…' : 'Adicione uma foto'}</strong><p>Uma imagem por publicação. Ela será comprimida antes do envio.</p><div><button onClick={() => libraryInput.current?.click()} disabled={preparing}><ImagePlus size={15} />Escolher foto</button><button onClick={() => cameraInput.current?.click()} disabled={preparing}><Camera size={15} />Tirar foto</button></div></div>}
