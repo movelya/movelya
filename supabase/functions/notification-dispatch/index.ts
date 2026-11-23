@@ -1,9 +1,12 @@
 import webpush from 'web-push'
 
 type ReminderType = 'workout' | 'water' | 'meal' | 'walk' | 'weigh_in' | 'goal_near' | 'weekly_summary'
+type SocialType = 'social_like' | 'social_comment' | 'social_follow' | 'club_invite'
+type NotificationType = ReminderType | SocialType
 type Preference = { type: ReminderType; enabled: boolean; time: string; days: number[]; intervalMinutes: number | null }
 type SettingsRow = { user_id: string; paused_until: string | null; quiet_start: string; quiet_end: string; preferences: Preference[] }
 type Subscription = { id: string; user_id: string; endpoint: string; p256dh: string; auth_key: string }
+type SocialNotification = { id: string; user_id: string; type: SocialType; title: string; message: string; action_path: string; action_label: string; created_at: string }
 
 const copy: Record<ReminderType, { title: string; message: string; path: string }> = {
   workout: { title: 'Hora do treino', message: 'Seu treino planejado está esperando por você.', path: '/treinos' },
@@ -32,12 +35,14 @@ Deno.serve(async (request) => {
   const settingsResult = await rest<SettingsRow[]>(baseUrl, serviceKey, 'notification_settings?select=user_id,paused_until,quiet_start,quiet_end,preferences')
   if (!settingsResult.ok) return response({ error: 'Não foi possível consultar os lembretes.' }, 502)
   const candidates = settingsResult.data.filter((settings) => dueTypes(settings, now).length > 0)
-  if (!candidates.length) return response({ delivered: 0, skipped: 0 })
+  const socialResult = await rest<SocialNotification[]>(baseUrl, serviceKey, `app_notifications?type=in.(social_like,social_comment,social_follow,club_invite)&read_at=is.null&created_at=gte.${encodeURIComponent(new Date(now.getTime() - 30 * 60 * 1000).toISOString())}&select=id,user_id,type,title,message,action_path,action_label,created_at`)
+  if (!socialResult.ok) return response({ error: 'Não foi possível consultar as interações sociais.' }, 502)
+  if (!candidates.length && !socialResult.data.length) return response({ delivered: 0, skipped: 0 })
 
-  const ids = candidates.map((item) => item.user_id)
+  const ids = [...new Set([...candidates.map((item) => item.user_id), ...socialResult.data.map((item) => item.user_id)])]
   const [subscriptionsResult, logsResult] = await Promise.all([
     rest<Subscription[]>(baseUrl, serviceKey, `push_subscriptions?user_id=in.(${ids.join(',')})&select=id,user_id,endpoint,p256dh,auth_key`),
-    rest<Array<{ user_id: string; type: ReminderType; delivered_at: string }>>(baseUrl, serviceKey, `notification_delivery_log?user_id=in.(${ids.join(',')})&delivered_at=gte.${encodeURIComponent(new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())}&select=user_id,type,delivered_at`),
+    rest<Array<{ user_id: string; type: NotificationType; delivered_at: string }>>(baseUrl, serviceKey, `notification_delivery_log?user_id=in.(${ids.join(',')})&delivered_at=gte.${encodeURIComponent(new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString())}&select=user_id,type,delivered_at`),
   ])
   if (!subscriptionsResult.ok || !logsResult.ok) return response({ error: 'Não foi possível preparar os envios.' }, 502)
 
@@ -57,6 +62,16 @@ Deno.serve(async (request) => {
       ])
       delivered++
     }
+  }
+  for (const notification of socialResult.data) {
+    const userSubscriptions = subscriptionsResult.data.filter((item) => item.user_id === notification.user_id)
+    const lastSent = logsResult.data.filter((log) => log.user_id === notification.user_id && log.type === notification.type).sort((a, b) => b.delivered_at.localeCompare(a.delivered_at))[0]?.delivered_at
+    // Uma interação social de cada tipo a cada seis horas: útil sem transformar o app em ruído.
+    if (!userSubscriptions.length || (lastSent && now.getTime() - new Date(lastSent).getTime() < 6 * 60 * 60 * 1000)) { skipped++; continue }
+    const sent = await sendPayload(baseUrl, serviceKey, userSubscriptions, notification.type, notification.title, notification.message, notification.action_path)
+    if (!sent) { skipped++; continue }
+    await insert(baseUrl, serviceKey, 'notification_delivery_log', { user_id: notification.user_id, type: notification.type })
+    delivered++
   }
   return response({ delivered, skipped })
 })
@@ -78,7 +93,11 @@ function allowed(settings: SettingsRow, type: ReminderType, now: Date, lastSent?
 function isScheduledMinute(preference: Preference, currentMinute: number) { const initial = minutes(preference.time); return preference.intervalMinutes ? currentMinute >= initial && (currentMinute - initial) % preference.intervalMinutes === 0 : currentMinute === initial }
 function saoPaulo(now: Date) { const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(now); const value = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? 0); const weekday = parts.find((part) => part.type === 'weekday')?.value; return { day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(weekday ?? ''), minutes: value('hour') * 60 + value('minute') } }
 async function sendToUser(base: string, key: string, subscriptions: Subscription[], type: ReminderType) {
-  const item = copy[type], payload = JSON.stringify({ title: item.title, body: item.message, url: `./#${item.path}`, tag: `movelya-${type}` })
+  const item = copy[type]
+  return sendPayload(base, key, subscriptions, type, item.title, item.message, item.path)
+}
+async function sendPayload(base: string, key: string, subscriptions: Subscription[], type: NotificationType, title: string, message: string, path: string) {
+  const payload = JSON.stringify({ title, body: message, url: `./#${path}`, tag: `movelya-${type}` })
   const results = await Promise.all(subscriptions.map(async (subscription) => {
     try { await webpush.sendNotification({ endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth_key } }, payload, { TTL: 3600, urgency: type === 'water' ? 'normal' : 'high' }); return true }
     catch (error) { const statusCode = Number((error as { statusCode?: number }).statusCode); if (statusCode === 404 || statusCode === 410) await remove(base, key, subscription.id); console.error('push failed', statusCode); return false }
