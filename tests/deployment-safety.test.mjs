@@ -74,3 +74,11 @@ test('onboarding groups routine details and records assistant latency privately'
   assert.match(onboarding, /currentStep === 3.*LocationStep/)
   assert.match(chat, /observabilityService\.reportPerformance\('Resposta da IA'/)
 })
+
+test('reminders are dispatched server-side when the installed app is closed', () => {
+  const workflow = read('.github/workflows/notification-dispatch.yml')
+  assert.match(workflow, /schedule:/)
+  assert.match(workflow, /notification-dispatch/)
+  assert.match(workflow, /NOTIFICATION_CRON_SECRET/)
+  assert.match(workflow, /curl --fail/)
+})

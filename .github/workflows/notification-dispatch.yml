@@ -1,0 +1,25 @@
+name: Dispatch MOVELYA reminders
+
+on:
+  schedule:
+    # Server-side delivery is intentionally batched to avoid noisy reminders.
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Trigger protected notification dispatch
+        env:
+          SUPABASE_FUNCTION_URL: https://kbkhishegoifrkhwlipg.supabase.co/functions/v1/notification-dispatch
+          NOTIFICATION_CRON_SECRET: ${{ secrets.NOTIFICATION_CRON_SECRET }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST "$SUPABASE_FUNCTION_URL" \
+            --header 'Content-Type: application/json' \
+            --header "x-movelya-cron-secret: $NOTIFICATION_CRON_SECRET" \
+            --data '{"source":"github-actions"}'
