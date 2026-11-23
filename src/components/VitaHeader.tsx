@@ -6,7 +6,7 @@ import { VitaLogo } from './VitaNavigation'
 
 type ThemePreference = 'light' | 'dark' | 'system'
 
-export function VitaHeader({ route, onOpenMenu, onNavigate, theme, themePreference, onSetTheme }: { route: VitaRoute | null; onOpenMenu: () => void; onNavigate: (path: string) => void; theme: 'dark' | 'light'; themePreference: ThemePreference; onSetTheme: (theme: ThemePreference) => void }) {
+export function VitaHeader({ route, onOpenMenu, onNavigate, theme, themePreference, onSetTheme, unreadNotifications }: { route: VitaRoute | null; onOpenMenu: () => void; onNavigate: (path: string) => void; theme: 'dark' | 'light'; themePreference: ThemePreference; onSetTheme: (theme: ThemePreference) => void; unreadNotifications: number }) {
   const { user } = useAuth()
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const name = String(user?.user_metadata?.full_name || 'Usuário MOVELYA')
@@ -36,7 +36,7 @@ export function VitaHeader({ route, onOpenMenu, onNavigate, theme, themePreferen
             <button className={themePreference === 'dark' ? 'is-active' : ''} onClick={() => { onSetTheme('dark'); setThemeMenuOpen(false) }} role="menuitem"><Moon size={15} /><span>Escuro</span>{themePreference === 'dark' && <Check size={14} />}</button>
           </div>}
         </div>
-        <button className="vita-icon-button" onClick={() => onNavigate('/notificacoes')} aria-label="Abrir notificações"><Bell size={19} /><i /></button>
+        <button className="vita-icon-button" onClick={() => onNavigate('/notificacoes')} aria-label={unreadNotifications ? `Abrir notificações, ${unreadNotifications} não lidas` : 'Abrir notificações'}><Bell size={19} />{unreadNotifications > 0 && <i />}</button>
         <button className="vita-profile" onClick={() => onNavigate('/perfil')} aria-label="Abrir perfil">
           <span className="profile-avatar">{initials}</span>
           <span className="profile-copy"><strong>{name}</strong><small>{user?.email}</small></span>

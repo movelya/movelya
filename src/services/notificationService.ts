@@ -25,6 +25,13 @@ let scheduledUserId: string | undefined
 let scheduledSettings: NotificationSettings | undefined
 
 export const notificationService = {
+  async unreadCount(userId: string): Promise<number> {
+    if (!supabase) return localNotifications.filter((item) => !item.readAt).length
+    const { count, error } = await supabase.from('app_notifications').select('id', { count: 'exact', head: true }).eq('user_id', userId).is('read_at', null)
+    if (error) throw error
+    return count ?? 0
+  },
+
   async load(userId: string): Promise<{ settings: NotificationSettings; notifications: AppNotification[] }> {
     if (!supabase) return { settings: cloneSettings(localSettings), notifications: [...localNotifications] }
     const [settingsResult, notificationsResult] = await Promise.all([

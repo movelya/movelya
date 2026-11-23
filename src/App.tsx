@@ -53,6 +53,7 @@ export default function App() {
   const [systemTheme, setSystemTheme] = useState<'dark' | 'light'>('light')
   const [showPlanWelcome, setShowPlanWelcome] = useState(false)
   const [showQuotaUpgrade, setShowQuotaUpgrade] = useState(false)
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
   const routeStageRef = useRef<HTMLDivElement>(null)
   const planWelcomeCheckRef = useRef<string | null>(null)
   const userId = user?.id
@@ -89,6 +90,15 @@ export default function App() {
     if (!user) return
     void notificationService.startReminderScheduler(user.id)
     return () => notificationService.stopReminderScheduler()
+  }, [user])
+
+  useEffect(() => {
+    if (!user) { setUnreadNotifications(0); return }
+    let active = true
+    const refresh = () => { void notificationService.unreadCount(user.id).then((count) => active && setUnreadNotifications(count)).catch(() => undefined) }
+    refresh()
+    const timer = window.setInterval(refresh, 45_000)
+    return () => { active = false; window.clearInterval(timer) }
   }, [user])
 
   useEffect(() => {
@@ -243,6 +253,7 @@ export default function App() {
             theme={theme}
             themePreference={themePreference}
             onSetTheme={setThemePreference}
+            unreadNotifications={unreadNotifications}
           />
 
           <main className={`vita-main ${status === 'transitioning' ? 'is-transitioning' : ''}`}>
